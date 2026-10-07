@@ -1,13 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Edit3, KeyRound, X } from 'lucide-react';
+import { UserPlus, Edit3, KeyRound, User, Lock, Mail } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 import type { UserItem, RoleItem } from '../../../types/users';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from '../../../components/ui/Dialog';
+import { Button } from '../../../components/ui/Button';
+import { TextField } from '../../../components/ui/TextField';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/Select';
 
 export interface UserModalProps {
   isOpen: boolean;
   onClose: () => void;
   user?: UserItem | null;
   roles: RoleItem[];
-  onSave: (data: Partial<UserItem> & { password?: string }) => void;
+  onSave: (data: {
+    id?: string;
+    name: string;
+    email: string;
+    roleId: string;
+    password?: string;
+    isActive?: boolean;
+  }) => void;
 }
 
 export const UserModal: React.FC<UserModalProps> = ({
@@ -17,200 +43,171 @@ export const UserModal: React.FC<UserModalProps> = ({
   roles,
   onSave,
 }) => {
+  const { hasPermission } = useAuth();
   const isEditMode = Boolean(user);
+  const canSave = isEditMode ? hasPermission('users:update') : hasPermission('users:create');
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [role, setRole] = useState('');
+  const [email, setEmail] = useState('');
+  const [roleId, setRoleId] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       if (user) {
         setName(user.name);
-        setUsername(user.username.replace(/^@/, ''));
-        setRole(user.role);
+        setEmail(user.email || '');
+        setRoleId(user.roleId || roles[0]?.id || '');
         setPassword('');
       } else {
         setName('');
-        setUsername('');
-        setRole(roles[1]?.name || roles[0]?.name || 'Kasir');
+        setEmail('');
+        setRoleId(roles[1]?.id || roles[0]?.id || '');
         setPassword('');
       }
     }
   }, [isOpen, user, roles]);
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !username.trim()) return;
+    if (!name.trim() || !email.trim() || !roleId) return;
 
-    const formattedUsername = username.startsWith('@')
-      ? username.trim()
-      : `@${username.trim()}`;
-
-    if (isEditMode && user) {
-      onSave({
-        ...user,
-        name: name.trim(),
-        username: formattedUsername,
-        role,
-        ...(password.trim() ? { password: password.trim() } : {}),
-      });
-    } else {
-      const avatarUrl =
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-      onSave({
-        name: name.trim(),
-        username: formattedUsername,
-        role,
-        status: 'Aktif',
-        avatarUrl,
-        password: password.trim(),
-      });
-    }
+    onSave({
+      id: user?.id,
+      name: name.trim(),
+      email: email.trim(),
+      roleId,
+      ...(password.trim() ? { password: password.trim() } : {}),
+      isActive: user ? user.isActive : true,
+    });
 
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-on-surface/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-surface-container-lowest rounded-2xl shadow-xl p-5 sm:p-6 flex flex-col gap-5 m-2 sm:m-4 border border-border-subtle">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="md" className="rounded-2xl border border-border-subtle p-0 gap-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                isEditMode
-                  ? 'bg-secondary-container text-on-secondary-container'
-                  : 'bg-primary-fixed text-on-primary-fixed'
-              }`}
-            >
-              {isEditMode ? (
-                <Edit3 className="w-5 h-5 text-secondary" />
-              ) : (
-                <UserPlus className="w-5 h-5 text-primary" />
-              )}
-            </div>
-            <div>
-              <h3 className="text-[18px] sm:text-xl font-bold text-on-surface">
-                {isEditMode ? 'Edit Data & Akses Pengguna' : 'Tambah Pengguna Baru'}
-              </h3>
-              <p className="text-xs text-text-muted">
-                {isEditMode && user
-                  ? `Mengubah akun ${user.username}`
-                  : 'Tambahkan akun staf kasir atau admin baru untuk akses sistem toko.'}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="text-text-muted hover:text-on-surface p-1 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"
-            onClick={onClose}
+        <DialogHeader className="px-6 py-4.5 bg-surface-container-high/40 border-b border-border-subtle flex flex-row items-center gap-3">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              isEditMode
+                ? 'bg-secondary-container text-on-secondary-container'
+                : 'bg-primary-fixed text-on-primary-fixed'
+            }`}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            {isEditMode ? (
+              <Edit3 className="w-5 h-5 text-secondary" />
+            ) : (
+              <UserPlus className="w-5 h-5 text-primary" />
+            )}
+          </div>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <DialogTitle className="text-base sm:text-lg font-bold text-on-surface">
+              {isEditMode ? 'Edit Data & Akses Pengguna' : 'Tambah Pengguna Baru'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-text-muted">
+              {isEditMode && user
+                ? `Mengubah informasi kredensial dan hak akses untuk akun ${user.email || user.name}`
+                : 'Tambahkan akun staf kasir atau admin baru untuk akses operasional toko.'}
+            </DialogDescription>
+          </div>
+        </DialogHeader>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-on-surface">
-              Nama Lengkap <span className="text-error">*</span>
-            </label>
-            <input
-              type="text"
+        {/* Form Body */}
+        <form onSubmit={handleSubmit}>
+          <DialogBody className="p-6 flex flex-col gap-4 text-on-surface">
+            {/* Field: Nama Lengkap */}
+            <TextField
+              label="Nama Lengkap"
               required
+              icon={User}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Dedi Setiawan"
-              className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle transition-all placeholder:text-text-muted"
+              placeholder="Contoh: Budi Santoso"
             />
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-on-surface">
-              Username (ID Kasir/Staf) <span className="text-error">*</span>
-            </label>
-            <input
-              type="text"
+            {/* Field: Email */}
+            <TextField
+              type="email"
+              label="Email Pengguna"
               required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Contoh: dedi_kasir"
-              className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle transition-all placeholder:text-text-muted"
+              icon={Mail}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Contoh: budi@kasirin.com"
+              helperText="Email digunakan untuk proses login akun ke sistem."
             />
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-on-surface">
-              Peran (Role) <span className="text-error">*</span>
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer border border-border-subtle"
-            >
-              {roles.map((r) => (
-                <option key={r.id} value={r.name}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Password section */}
-          {isEditMode ? (
-            <div className="p-3.5 bg-surface-bg rounded-xl flex flex-col gap-2 border border-border-subtle">
-              <div className="flex items-center gap-1.5 text-tertiary font-semibold text-xs">
-                <KeyRound className="w-4 h-4" /> Reset Password
-              </div>
-              <p className="text-xs text-text-muted">
-                Biarkan kosong jika tidak ingin mengubah kata sandi akun pengguna ini.
-              </p>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ketik kata sandi baru (opsional)"
-                className="w-full px-3 py-2 bg-surface-container-lowest rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle placeholder:text-text-muted"
-              />
-            </div>
-          ) : (
+            {/* Field: Peran (Role) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-on-surface">
-                Password Masuk <span className="text-error">*</span>
+                Peran (Role) <span className="text-error">*</span>
               </label>
-              <input
+              <Select value={roleId} onValueChange={setRoleId}>
+                <SelectTrigger size="md" className="bg-white">
+                  <SelectValue placeholder="Pilih Peran (Role)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Password Section */}
+            {isEditMode ? (
+              <div className="p-3.5 bg-surface-bg rounded-xl flex flex-col gap-2 border border-border-subtle">
+                <div className="flex items-center gap-1.5 text-tertiary font-semibold text-xs">
+                  <KeyRound className="w-4 h-4" /> Reset Kata Sandi
+                </div>
+                <p className="text-xs text-text-muted">
+                  Biarkan kosong jika tidak ingin mengubah kata sandi akun pengguna ini.
+                </p>
+                <TextField
+                  type="password"
+                  icon={Lock}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Ketik kata sandi baru (opsional)"
+                />
+              </div>
+            ) : (
+              <TextField
                 type="password"
+                label="Kata Sandi Masuk"
                 required
+                icon={Lock}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 8 karakter..."
-                className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle transition-all placeholder:text-text-muted"
               />
-            </div>
-          )}
+            )}
+          </DialogBody>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
+          {/* Footer Actions */}
+          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-end gap-2.5">
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-lg text-sm font-semibold text-text-muted hover:bg-surface-container transition-colors cursor-pointer"
             >
               Batal
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary hover:bg-primary-container text-on-primary transition-all shadow-sm active:scale-[0.98] cursor-pointer"
-            >
-              {isEditMode ? 'Simpan Perubahan' : 'Simpan Pengguna'}
-            </button>
-          </div>
+            </Button>
+            {canSave && (
+              <Button
+                type="submit"
+                variant="primary"
+              >
+                {isEditMode ? 'Simpan Perubahan' : 'Simpan Pengguna'}
+              </Button>
+            )}
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

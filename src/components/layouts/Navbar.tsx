@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
 import Button from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const { user, logout, hasPermission } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -26,18 +28,47 @@ export const Navbar: React.FC = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    setProfileDropdownOpen(false);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Error saat logout:', err);
+    } finally {
+      setProfileDropdownOpen(false);
+      navigate('/login');
+    }
   };
 
-  const navItems = [
-    { label: 'Transaksi (Kasir)', path: '/' },
-    { label: 'Produk & Kategori', path: '/produk' },
-    { label: 'Laporan', path: '/laporan' },
-    { label: 'Pengaturan Toko', path: '/pengaturan-toko' },
-    { label: 'User and Role', path: '/pengaturan-users' },
+  const allNavItems = [
+    {
+      label: 'Transaksi (Kasir)',
+      path: '/',
+      isAllowed: () => hasPermission('transactions:view'),
+    },
+    {
+      label: 'Produk & Kategori',
+      path: '/produk',
+      isAllowed: () => hasPermission('products:view') || hasPermission('categories:view'),
+    },
+    {
+      label: 'Laporan',
+      path: '/laporan',
+      isAllowed: () => hasPermission('transactions:view'),
+    },
+    {
+      label: 'Pengaturan Toko',
+      path: '/pengaturan-toko',
+      isAllowed: () => hasPermission('store:view'),
+    },
+    {
+      label: 'User and Role',
+      path: '/pengaturan-users',
+      isAllowed: () => hasPermission('users:view') || hasPermission('roles:view'),
+    },
   ];
+
+  // Menu yang tampil hanya menu yang diizinkan untuk role user saat ini
+  const navItems = allNavItems.filter((item) => item.isAllowed());
 
   return (
     <header className="fixed top-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
@@ -118,7 +149,13 @@ export const Navbar: React.FC = () => {
 
             {/* Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-card border border-border-subtle shadow-xl py-1.5 z-50">
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-surface-card border border-border-subtle shadow-xl py-2 z-50">
+                {user && (
+                  <div className="px-4 py-2 border-b border-border-subtle mb-1">
+                    <p className="text-sm font-semibold text-on-surface truncate">{user.name || 'User'}</p>
+                    <p className="text-xs text-text-muted capitalize">{user.roleName || 'Staff'}</p>
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="ghost"

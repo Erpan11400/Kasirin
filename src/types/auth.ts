@@ -1,20 +1,4 @@
 import type { ApiResponse } from '../lib/api';
-import type { PermissionActions } from './users';
-
-export type { PermissionActions };
-
-export type PermissionModule =
-  | 'categories'
-  | 'products'
-  | 'store'
-  | 'transactions'
-  | 'roles'
-  | 'users'
-  | string;
-
-export type PermissionsMap = {
-  [module in PermissionModule]?: PermissionActions;
-};
 
 export interface UserInfo {
   name: string;
@@ -27,7 +11,14 @@ export interface LoginResponseData {
   refreshToken: string;
   name: string;
   roleName: string;
-  permissions: PermissionsMap;
+  permissions: string[];
+}
+
+export interface RefreshTokenResponseData {
+  accessToken: string;
 }
 
 export type LoginApiResponse = ApiResponse<LoginResponseData>;
+export type RefreshTokenApiResponse = ApiResponse<RefreshTokenResponseData | string>;
+
+

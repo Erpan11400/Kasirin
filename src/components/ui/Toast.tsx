@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -29,9 +30,6 @@ export interface ToastProps {
   onClose?: () => void;
   icon?: React.ReactNode;
   className?: string;
-  /**
-   * Dukungan backward-compatibility untuk objek info (misal: state `{ show, message }`)
-   */
   toast?: ToastInfoObject;
 }
 
@@ -71,6 +69,12 @@ export const Toast: React.FC<ToastProps> = ({
   className,
   toast,
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Evaluasi visibilitas toast
   const isVisible =
     toast?.show !== undefined
@@ -93,12 +97,12 @@ export const Toast: React.FC<ToastProps> = ({
     return () => clearTimeout(timer);
   }, [isVisible, duration, onClose]);
 
-  if (!isVisible || !content) return null;
+  if (!mounted || !isVisible || !content) return null;
 
-  return (
+  return createPortal(
     <div
       className={cn(
-        'fixed z-50 transform transition-all duration-300 max-w-[calc(100vw-2rem)] sm:max-w-md',
+        'fixed z-[99999] transform transition-all duration-300 max-w-[calc(100vw-2rem)] sm:max-w-md',
         'animate-in fade-in zoom-in-95 duration-200 pointer-events-auto',
         positionStyles[position]
       )}
@@ -145,7 +149,8 @@ export const Toast: React.FC<ToastProps> = ({
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

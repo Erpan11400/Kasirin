@@ -3,7 +3,7 @@ export interface Product {
   name: string;
   category: string;
   price: number;
-  sku: string;
+  code?: string;
   stock: number;
   image: string;
   imageAlt: string;
@@ -16,7 +16,7 @@ export interface CartItem {
   name: string;
   price: number;
   qty: number;
-  sku?: string;
+  code?: string;
 }
 
 export type PaymentMethod = 'tunai' | 'qris' | 'transfer';

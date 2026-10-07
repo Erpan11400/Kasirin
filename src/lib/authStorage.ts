@@ -1,4 +1,4 @@
-import type { LoginResponseData, PermissionsMap, UserInfo, PermissionModule, PermissionActions } from '../types/auth';
+import type { LoginResponseData, UserInfo } from '../types/auth';
 
 export const AUTH_KEYS = {
   ACCESS_TOKEN: 'accessToken',
@@ -8,7 +8,7 @@ export const AUTH_KEYS = {
 } as const;
 
 /**
- * Menyimpan seluruh data otentikasi ke Local Storage terpisah sesuai spesifikasi
+ * Menyimpan seluruh data otentikasi ke Local Storage terpisah sesuai spesifikasi backend
  */
 export const saveAuthSession = (data: LoginResponseData): void => {
   if (!data) return;
@@ -30,10 +30,18 @@ export const saveAuthSession = (data: LoginResponseData): void => {
   };
   localStorage.setItem(AUTH_KEYS.USER_INFO, JSON.stringify(userInfo));
 
-  // 4. Simpan Permissions
+  // 4. Simpan Permissions (Array of strings, e.g. ["categories:view", "categories:create", ...])
   if (data.permissions) {
     localStorage.setItem(AUTH_KEYS.PERMISSION, JSON.stringify(data.permissions));
   }
+};
+
+/**
+ * Menyimpan atau memperbarui Access Token di Local Storage
+ */
+export const setAccessToken = (token: string): void => {
+  if (!token) return;
+  localStorage.setItem(AUTH_KEYS.ACCESS_TOKEN, token);
 };
 
 /**
@@ -65,34 +73,35 @@ export const getUserInfo = (): UserInfo | null => {
 };
 
 /**
- * Mengambil Permissions map yang sudah diparsing
+ * Mengambil list Permissions (string[]) yang sudah diparsing dari Local Storage
  */
-export const getPermissions = (): PermissionsMap | null => {
+export const getPermissions = (): string[] => {
   const permStr = localStorage.getItem(AUTH_KEYS.PERMISSION);
-  if (!permStr) return null;
+  if (!permStr) return [];
   try {
-    return JSON.parse(permStr) as PermissionsMap;
+    const parsed = JSON.parse(permStr);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     console.error('Error parsing permissions from localStorage', err);
-    return null;
+    return [];
   }
 };
 
 /**
  * Helper untuk memeriksa hak akses modul dan aksi tertentu
- * Contoh: hasPermission('products', 'delete') -> true/false
+ * Contoh:
+ *   hasPermission('categories:view') -> true/false
+ *   hasPermission('categories', 'create') -> true/false
  */
 export const hasPermission = (
-  moduleName: PermissionModule,
-  action: keyof PermissionActions = 'view'
+  moduleOrPermission: string,
+  action?: string
 ): boolean => {
   const permissions = getPermissions();
-  if (!permissions) return false;
+  if (!permissions || permissions.length === 0) return false;
 
-  const modulePerms = permissions[moduleName];
-  if (!modulePerms) return false;
-
-  return Boolean(modulePerms[action]);
+  const permissionKey = action ? `${moduleOrPermission}:${action}` : moduleOrPermission;
+  return permissions.includes(permissionKey);
 };
 
 /**
@@ -107,8 +116,62 @@ export const clearAuthSession = (): void => {
 };
 
 /**
+ * Memeriksa apakah token JWT sudah kadaluarsa (expired)
+ */
+export const isTokenExpired = (token: string | null): boolean => {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      // Jika bukan format 3 part JWT, jangan anggap expired
+      return false;
+    }
+
+    // Normalisasi base64url ke standard base64 dengan padding '='
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+
+    const payloadStr = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+
+    const payload = JSON.parse(payloadStr);
+    if (typeof payload.exp === 'number') {
+      // payload.exp dalam satuan detik, bandingkan dengan Date.now() dalam milidetik
+      return Date.now() >= payload.exp * 1000;
+    }
+    return false;
+  } catch (err) {
+    console.error('Error saat memeriksa expired token:', err);
+    return false;
+  }
+};
+
+/**
  * Memeriksa apakah user sedang dalam sesi login yang valid
+ * Sesi dianggap valid jika accessToken belum expired ATAU refreshToken masih ada dan valid
  */
 export const isAuthenticated = (): boolean => {
-  return Boolean(getAccessToken());
+  const accessToken = getAccessToken();
+  const refreshToken = getRefreshToken();
+
+  // Jika kedua token tidak ada, berarti belum login
+  if (!accessToken && !refreshToken) return false;
+
+  // Jika accessToken masih valid
+  if (accessToken && !isTokenExpired(accessToken)) {
+    return true;
+  }
+
+  // Jika accessToken expired, periksa apakah refreshToken masih valid
+  if (refreshToken && !isTokenExpired(refreshToken)) {
+    return true;
+  }
+
+  return false;
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import type { Product } from '../../../types/pos';
 import { formatRupiah } from '../../../lib/formatters';
+import { Button } from '../../../components/ui/Button';
 
 interface ProductCardProps {
   product: Product;
@@ -11,8 +12,9 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   return (
     <article
-      className={`group bg-surface-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative ${product.isLowStock ? 'ring-1 ring-amber-300' : ''
-        }`}
+      className={`group bg-surface-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative ${
+        product.isLowStock ? 'ring-1 ring-amber-300' : ''
+      }`}
     >
       {/* Product Image & Badges */}
       <div className="relative w-full aspect-[4/3] bg-surface-container overflow-hidden">
@@ -52,20 +54,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
           <h3 className="text-sm font-semibold text-on-surface line-clamp-2">
             {product.name}
           </h3>
-          <p className="text-xs text-text-muted mt-0.5">SKU: {product.sku}</p>
+          <p className="text-xs text-text-muted mt-0.5">Kode: {product.code || '-'}</p>
         </div>
         <div className="flex items-center justify-between pt-1">
           <span className="text-base font-bold text-primary">
             {formatRupiah(product.price)}
           </span>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onAddToCart(product)}
-            className="w-9 h-9 rounded-lg bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-sm active:scale-95 transition-all cursor-pointer"
+            className="h-9 w-9 p-0 rounded-lg shrink-0"
             title="Tambah ke keranjang"
-            type="button"
           >
             <Plus className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       </div>
     </article>

@@ -2,6 +2,14 @@ import React from 'react';
 import { Receipt, X, Printer } from 'lucide-react';
 import type { CartItem, PaymentMethod } from '../../../types/pos';
 import { formatRupiah } from '../../../lib/formatters';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../../components/ui/Dialog';
+import { Button } from '../../../components/ui/Button';
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -28,8 +36,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   paymentMethod,
   onPrint,
 }) => {
-  if (!isOpen) return null;
-
   const paymentLabelMap: Record<PaymentMethod, string> = {
     tunai: 'Tunai',
     qris: 'QRIS',
@@ -37,32 +43,31 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-sm bg-surface-card rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Top bar */}
-        <div className="bg-surface-container-high px-4 py-3 flex items-center justify-between border-b border-border-subtle">
-          <div className="flex items-center gap-2">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        size="sm"
+        showCloseButton={false}
+        className="max-w-sm rounded-2xl overflow-hidden p-0 gap-0 border border-border-subtle"
+      >
+        {/* Top bar header */}
+        <DialogHeader className="bg-surface-container-high px-4 py-3 flex flex-row items-center justify-between border-b border-border-subtle rounded-none">
+          <DialogTitle className="flex items-center gap-2 text-sm font-semibold text-on-surface">
             <Receipt className="w-5 h-5 text-primary" />
-            <span className="text-sm font-semibold text-on-surface">
-              Pratinjau Struk Kasir (80mm)
-            </span>
-          </div>
+            <span>Pratinjau Struk Kasir (80mm)</span>
+          </DialogTitle>
+
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg text-text-muted hover:text-on-surface hover:bg-surface-card flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg text-text-muted hover:text-on-surface hover:bg-surface-card flex items-center justify-center transition-colors cursor-pointer outline-none"
             type="button"
+            title="Tutup Modal"
           >
             <X className="w-4 h-4" />
           </button>
-        </div>
+        </DialogHeader>
 
         {/* Thermal Receipt Paper */}
-        <div className="p-6 font-mono text-[13px] leading-relaxed text-slate-800 bg-amber-50/40 select-text max-h-[70vh] overflow-y-auto">
+        <div className="p-6 font-mono text-[13px] leading-relaxed text-slate-800 bg-amber-50/40 select-text max-h-[65vh] overflow-y-auto scrollbar-thin">
           {/* Store Info */}
           <div className="text-center">
             <div className="font-bold text-[16px] tracking-wide text-slate-900">
@@ -173,24 +178,25 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 bg-surface-card border-t border-border-subtle flex items-center gap-2">
-          <button
+        <DialogFooter className="p-4 bg-surface-card border-t border-border-subtle flex items-center gap-2 rounded-none">
+          <Button
+            variant="primary"
             onClick={onPrint}
-            className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
-            type="button"
+            leftIcon={<Printer className="w-5 h-5" />}
+            className="flex-1 h-11"
           >
-            <Printer className="w-5 h-5" />
-            <span>Cetak Struk</span>
-          </button>
-          <button
+            Cetak Struk
+          </Button>
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="px-4 h-11 rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface text-sm transition-colors cursor-pointer"
-            type="button"
+            className="px-4 h-11"
           >
             Tutup
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
+

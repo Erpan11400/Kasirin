@@ -1,61 +1,108 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Lock, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { User, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, AlertCircle, X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import TextField from '../../../components/ui/TextField';
 import Toast, { type ToastType } from '../../../components/ui/Toast';
+import { useAuth } from '../../../context/AuthContext';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     type: ToastType;
     title: string;
     message: string;
   } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Silakan isi email dan kata sandi Anda terlebih dahulu.');
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulasi respons backend/autentikasi (1 detik)
-    setTimeout(() => {
+    try {
+      const data = await login({
+        email: email.trim(),
+        password,
+      });
+
+      setToast({
+        type: 'success',
+        title: 'Login Berhasil',
+        message: `Selamat datang kembali, ${data.name || 'User'}! Menyiapkan dashboard...`,
+      });
+
+      const destination = (location.state as any)?.from?.pathname || '/';
+      setTimeout(() => {
+        navigate(destination, { replace: true });
+      }, 1000);
+    } catch (err: any) {
+      const message = err?.message || 'Email atau kata sandi tidak valid. Silakan coba lagi.';
+      setErrorMessage(message);
+    } finally {
       setIsLoading(false);
-
-      if (email.trim() && password.trim()) {
-        setToast({
-          type: 'success',
-          title: 'Login Berhasil',
-          message: `Selamat datang kembali! Menyiapkan dashboard...`,
-        });
-
-        // Arahkan ke dashboard setelah notifikasi muncul
-        setTimeout(() => {
-          navigate('/');
-        }, 1200);
-      } else {
-        setToast({
-          type: 'error',
-          title: 'Login Gagal',
-          message: 'Silakan isi email dan kata sandi Anda terlebih dahulu.',
-        });
-      }
-    }, 1000);
+    }
   };
 
   return (
     <>
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Field Username */}
+        {/* Error Alert Box - Di atas field Email */}
+        {errorMessage && (
+          <div
+            role="alert"
+            className="bg-red-50/90 border border-red-200/90 rounded-xl p-3.5 flex gap-3 items-start transition-all animate-in fade-in zoom-in-95 duration-200"
+          >
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-red-900 leading-tight">
+                Gagal Masuk
+              </p>
+              <p className="text-xs text-red-700 leading-relaxed mt-0.5">
+                {errorMessage}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              className="text-red-400 hover:text-red-700 p-0.5 rounded-lg hover:bg-red-100/80 transition-colors shrink-0 -mr-1 -mt-1 cursor-pointer"
+              aria-label="Tutup pesan error"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        {/* Field Username / Email */}
         <TextField
           label="Email"
           icon={User}
           placeholder="Masukkan Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={handleEmailChange}
+          autoComplete="email"
         />
 
         {/* Field Password */}
@@ -65,7 +112,8 @@ export const LoginForm: React.FC = () => {
           icon={Lock}
           placeholder="••••••••"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handlePasswordChange}
+          autoComplete="current-password"
           rightElement={
             <Button
               type="button"

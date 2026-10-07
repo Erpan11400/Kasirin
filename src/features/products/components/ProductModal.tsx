@@ -1,13 +1,31 @@
-import React, { useState } from 'react';
-import { Package, X, RotateCw, ImagePlus, Check, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, RotateCw, ImagePlus } from 'lucide-react';
 import type { ProductItem, CategoryItem, ProductFormData } from '../../../types/products';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from '../../../components/ui/Dialog';
+import { Button } from '../../../components/ui/Button';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/Select';
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: ProductFormData) => void;
+  onSave: (data: ProductFormData) => Promise<void> | void;
   editingProduct?: ProductItem | null;
   categories: CategoryItem[];
+  isSubmitting?: boolean;
 }
 
 export const ProductModal: React.FC<ProductModalProps> = ({
@@ -16,255 +34,291 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   onSave,
   editingProduct,
   categories,
+  isSubmitting = false,
 }) => {
-  const [name, setName] = useState(() => editingProduct?.name ?? '');
-  const [sku, setSku] = useState(() => editingProduct?.sku ?? '');
-  const [category, setCategory] = useState(
-    () => editingProduct?.category ?? (categories[0]?.name || 'Sembako')
-  );
-  const [price, setPrice] = useState<string>(
-    () => (editingProduct?.price !== undefined ? editingProduct.price.toString() : '')
-  );
-  const [stock, setStock] = useState<string>(
-    () => (editingProduct?.stock !== undefined ? editingProduct.stock.toString() : '')
-  );
-  const [image, setImage] = useState<string>(
-    () => editingProduct?.image ?? ''
-  );
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [price, setPrice] = useState<string>('');
+  const [stock, setStock] = useState<string>('');
+  const [unit, setUnit] = useState('Pcs');
+  const [imageUrl, setImageUrl] = useState<string>('');
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (editingProduct) {
+      setName(editingProduct.name || '');
+      setCode(editingProduct.code || '');
+      // Find categoryId
+      const matchedCat = categories.find(
+        (c) =>
+          c.id === editingProduct.categoryId ||
+          c.name.toLowerCase() === editingProduct.category.toLowerCase()
+      );
+      setSelectedCategoryId(matchedCat?.id || editingProduct.categoryId || (categories[0]?.id ?? ''));
+      setPrice(editingProduct.price !== undefined ? editingProduct.price.toString() : '');
+      setStock(editingProduct.stock !== undefined ? editingProduct.stock.toString() : '');
+      setUnit(editingProduct.unit || 'Pcs');
+      setImageUrl(editingProduct.image || '');
+    } else {
+      setName('');
+      setCode(`PRD-${Math.floor(1000 + Math.random() * 9000)}`);
+      setSelectedCategoryId(categories[0]?.id || '');
+      setPrice('');
+      setStock('0');
+      setUnit('Pcs');
+      setImageUrl('');
+    }
+  }, [editingProduct, categories, isOpen]);
 
-  const handleGenerateSku = () => {
-    setSku(`SKU-${Math.floor(1000 + Math.random() * 9000)}`);
+  const handleGenerateCode = () => {
+    setCode(`PRD-${Math.floor(1000 + Math.random() * 9000)}`);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Mohon isi nama produk!');
       return;
     }
     const numPrice = parseFloat(price);
     if (isNaN(numPrice) || numPrice < 0) {
-      alert('Mohon isi harga produk yang valid!');
       return;
     }
     const numStock = parseInt(stock, 10);
     if (isNaN(numStock) || numStock < 0) {
-      alert('Mohon isi jumlah stok yang valid!');
       return;
     }
 
-    onSave({
+    const matchedCategory = categories.find((c) => c.id === selectedCategoryId);
+    const categoryName = matchedCategory ? matchedCategory.name : 'Umum';
+    const codeValue = code.trim();
+
+    await onSave({
       id: editingProduct ? editingProduct.id : undefined,
       name: name.trim(),
-      sku: sku.trim() || `SKU-${Math.floor(100 + Math.random() * 900)}`,
-      category,
+      code: codeValue,
+      categoryId: selectedCategoryId,
+      category: categoryName,
       price: numPrice,
       stock: numStock,
-      unit: editingProduct ? editingProduct.unit : 'Pcs',
-      image: image.trim() || editingProduct?.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuB4fT0rrfssE6dvNYQwqV0n6WhGlEnpqn8v8OdZgg7UMm6RsDYCUq6WaviS3n_83vN-lznxPObCuf2oIvCyoKUOVwPwU4dXSyleeO_0ZmRMVBgssTPM-OdGCouEYl3Hso7a6ztrnxTXxxsh5pU6KtbkpF2J2mVfCjYPszEUViw7ql5Y71zExPHfOzNkT1m9ElZRHGYzK3K5jvWza8GyusluQUuH1xSnucNN58Vijz-QdS4-D4yNLqEV',
+      unit: unit.trim() || 'Pcs',
+      image: imageUrl.trim(),
     });
   };
 
+  const isEdit = Boolean(editingProduct);
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 backdrop-blur-xs p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-xl bg-surface-card rounded-2xl shadow-xl overflow-hidden my-6 flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
-        {/* Modal Header */}
-        <div className="px-6 py-4 bg-surface-bg flex items-center justify-between border-b border-border-subtle/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <Package className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-on-surface">
-                {editingProduct ? 'Edit Data Produk' : 'Tambah Produk Baru'}
-              </h3>
-              <p className="text-xs text-text-muted">
-                Isi detail kelengkapan data inventaris toko Anda
-              </p>
-            </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+      <DialogContent size="2xl" className="rounded-2xl border border-border-subtle p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 py-4.5 bg-surface-container-high/40 border-b border-border-subtle flex flex-row items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+            <Package className="w-5 h-5" />
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-text-muted hover:bg-surface-container-high transition-colors cursor-pointer"
-            type="button"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
-          {/* Field: Nama Produk */}
-          <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1">
-              Nama Produk <span className="text-status-danger">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Kopi Hitam Bubuk 200g"
-              className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all"
-            />
+          <div className="flex flex-col">
+            <DialogTitle className="text-base sm:text-lg font-bold text-on-surface">
+              {isEdit ? 'Edit Data Produk' : 'Tambah Produk Baru'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-text-muted">
+              {isEdit
+                ? 'Perbarui informasi harga, stok, atau kategori produk.'
+                : 'Lengkapi formulir untuk menambahkan produk baru ke katalog toko.'}
+            </DialogDescription>
           </div>
+        </DialogHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Field: SKU / Barcode */}
+        <form onSubmit={handleSubmit}>
+          <DialogBody className="p-6 space-y-4 max-h-[calc(85vh-140px)] overflow-y-auto">
+            {/* Field: Nama Produk */}
             <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1">
-                SKU / Kode Barcode
+              <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                Nama Produk <span className="text-status-danger">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  placeholder="SKU-XXX-001"
-                  className="w-full pl-3.5 pr-9 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={handleGenerateSku}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary cursor-pointer p-1 transition-colors"
-                  title="Generate SKU Acak"
+              <input
+                type="text"
+                required
+                disabled={isSubmitting}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Contoh: Mie Ayam Komplit"
+                className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Field: Kategori */}
+              <div>
+                <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                  Kategori <span className="text-status-danger">*</span>
+                </label>
+                <Select
+                  value={selectedCategoryId}
+                  onValueChange={setSelectedCategoryId}
+                  disabled={isSubmitting}
                 >
-                  <RotateCw className="w-4 h-4" />
-                </button>
+                  <SelectTrigger
+                    size="default"
+                    className="bg-surface-bg border-border-subtle rounded-lg text-sm text-on-surface h-[42px]"
+                  >
+                    <SelectValue placeholder="Pilih Kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.emoji || '🏷️'} {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Field: Kode Produk */}
+              <div>
+                <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                  Kode Produk
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    disabled={isSubmitting}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="PRD-001"
+                    className="w-full pl-3.5 pr-10 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={handleGenerateCode}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary cursor-pointer p-1 transition-colors disabled:opacity-50"
+                    title="Generate Kode Acak"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Field: Kategori */}
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1">
-                Kategori <span className="text-status-danger">*</span>
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none cursor-pointer transition-all"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.emoji} {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Field: Harga Jual */}
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1">
-                Harga Jual (Rp) <span className="text-status-danger">*</span>
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-semibold">
-                  Rp
-                </span>
-                <input
-                  type="number"
-                  required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="15000"
-                  className="w-full pl-11 pr-3.5 py-2.5 bg-surface-bg rounded-lg text-sm font-bold text-on-surface ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all"
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+              {/* Field: Harga Jual */}
+              <div className="sm:col-span-5">
+                <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                  Harga Jual (Rp) <span className="text-status-danger">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-text-muted font-semibold">
+                    Rp
+                  </span>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    disabled={isSubmitting}
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="18000"
+                    className="w-full pl-11 pr-3.5 py-2.5 bg-surface-bg rounded-lg text-sm font-bold text-on-surface ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Field: Stok Awal */}
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1">
-                Jumlah Stok Saat Ini <span className="text-status-danger">*</span>
-              </label>
-              <div className="relative">
+              {/* Field: Stok */}
+              <div className="sm:col-span-3">
+                <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                  Stok <span className="text-status-danger">*</span>
+                </label>
                 <input
                   type="number"
                   required
+                  min="0"
+                  disabled={isSubmitting}
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
-                  placeholder="20"
-                  className="w-full pl-3.5 pr-20 py-2.5 bg-surface-bg rounded-lg text-sm font-bold text-on-surface ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all"
+                  placeholder="0"
+                  className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm font-bold text-on-surface ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-text-muted">
-                  Satuan/Pcs
-                </span>
+              </div>
+
+              {/* Field: Satuan (Unit) */}
+              <div className="sm:col-span-4">
+                <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                  Satuan (Unit)
+                </label>
+                <input
+                  type="text"
+                  list="unit-options"
+                  disabled={isSubmitting}
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  placeholder="Pcs"
+                  className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
+                />
+                <datalist id="unit-options">
+                  <option value="Pcs" />
+                  <option value="Kg" />
+                  <option value="Gram" />
+                  <option value="Botol" />
+                  <option value="Kaleng" />
+                  <option value="Sak" />
+                  <option value="Cup" />
+                  <option value="Kotak" />
+                  <option value="Renceng" />
+                  <option value="Bungkus" />
+                  <option value="Liter" />
+                </datalist>
               </div>
             </div>
-          </div>
 
-          {/* Field: Gambar Produk Dropzone */}
-          <div>
-            <label className="block text-sm font-semibold text-on-surface mb-1">
-              Foto Produk
-            </label>
-            <div
-              onClick={() => {
-                const url = window.prompt('Masukkan URL foto produk:', image);
-                if (url !== null) setImage(url.trim());
-              }}
-              className="rounded-xl p-4 bg-surface-bg border border-dashed border-border-subtle flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-surface-container-high/60 transition-colors"
-            >
-              {image ? (
-                <img
-                  src={image}
-                  alt="Preview Foto Produk"
-                  className="w-16 h-16 rounded-lg object-cover shadow-xs"
+            {/* Field: URL Foto Produk */}
+            <div>
+              <label className="block text-sm font-semibold text-on-surface mb-1.5">
+                Tautan URL Foto Produk
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="url"
+                  disabled={isSubmitting}
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/foto-produk.jpg"
+                  className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
                 />
-              ) : (
-                <ImagePlus className="w-8 h-8 text-primary opacity-80" />
-              )}
-              <div className="text-center">
-                <p className="text-sm font-semibold text-on-surface">
-                  {image
-                    ? 'Klik untuk mengganti tautan foto'
-                    : 'Klik untuk unggah atau masukkan URL foto'}
-                </p>
-                <p className="text-xs text-text-muted">
-                  Format PNG, JPG, atau WebP (Maks. 2MB)
-                </p>
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="w-10 h-10 rounded-lg object-cover border border-border-subtle shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-text-muted shrink-0">
+                    <ImagePlus className="w-5 h-5" />
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          </DialogBody>
 
-          {/* Quick Summary Preview */}
-          <div className="p-3 bg-surface-container-low rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-2 text-on-surface">
-              <ShieldCheck className="w-5 h-5 text-secondary shrink-0" />
-              <span className="text-xs">
-                Status ketersediaan akan otomatis diperbarui di layar kasir.
-              </span>
-            </div>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="pt-3 border-t border-border-subtle/60 flex items-center justify-end gap-3">
-            <button
-              onClick={onClose}
+          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-end gap-2.5">
+            <Button
               type="button"
-              className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
             >
               Batal
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:bg-primary-container shadow-xs active:scale-[0.98] transition-all flex items-center gap-1.5 cursor-pointer"
+              variant="primary"
+              isLoading={isSubmitting}
             >
-              <Check className="w-4 h-4" />
-              <span>Simpan Produk</span>
-            </button>
-          </div>
+              <span>{isEdit ? 'Simpan Perubahan' : 'Tambah Produk'}</span>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

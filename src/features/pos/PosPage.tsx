@@ -4,7 +4,6 @@ import {
   ScanBarcode,
   Search,
   X,
-  ChevronDown,
   RotateCw,
   ShoppingCart,
   Trash2,
@@ -20,8 +19,27 @@ import { ProductCard } from './components/ProductCard';
 import { CartItemRow } from './components/CartItemRow';
 import { ReceiptModal } from './components/ReceiptModal';
 import { BarcodeModal } from './components/BarcodeModal';
-import { Toast } from './components/Toast';
 import { formatRupiah } from '../../lib/formatters';
+import { Button } from '../../components/ui/Button';
+import { TextField } from '../../components/ui/TextField';
+import { Toast } from '../../components/ui/Toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from '../../components/ui/Dialog';
+
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../components/ui/Select';
 
 export const PosPage: React.FC = () => {
   // Catalog State
@@ -38,7 +56,7 @@ export const PosPage: React.FC = () => {
       name: 'Kopi Hitam 200g',
       price: 15000,
       qty: 1,
-      sku: 'KOP-0192',
+      code: 'KOP-0192',
     },
     {
       id: 'gula',
@@ -46,7 +64,7 @@ export const PosPage: React.FC = () => {
       name: 'Gula Pasir 1kg',
       price: 16000,
       qty: 2,
-      sku: 'GUL-0021',
+      code: 'GUL-0021',
     },
   ]);
 
@@ -57,6 +75,7 @@ export const PosPage: React.FC = () => {
   // Modals & Feedback
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState<boolean>(false);
+  const [isClearCartModalOpen, setIsClearCartModalOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastInfo>({ show: false, message: '' });
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -104,14 +123,14 @@ export const PosPage: React.FC = () => {
     return counts;
   }, [products]);
 
-  // Filtered Products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      const query = searchQuery.toLowerCase().trim();
       const matchCategory =
         selectedCategory === 'Semua Kategori' || product.category === selectedCategory;
       const matchSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        product.sku.toLowerCase().includes(searchQuery.toLowerCase().trim());
+        product.name.toLowerCase().includes(query) ||
+        (product.code && product.code.toLowerCase().includes(query));
       return matchCategory && matchSearch;
     });
   }, [products, selectedCategory, searchQuery]);
@@ -143,16 +162,16 @@ export const PosPage: React.FC = () => {
       return [
         ...prev,
         {
-          id: 'item-' + Date.now(),
+          id: product.id,
           productId: product.id,
           name: product.name,
           price: product.price,
           qty: 1,
-          sku: product.sku,
+          code: product.code,
         },
       ];
     });
-    showToast(`${product.name} ditambahkan ke keranjang`);
+    showToast(`"${product.name}" ditambahkan ke keranjang`);
   };
 
   const handleUpdateQty = (id: string, delta: number) => {
@@ -165,21 +184,27 @@ export const PosPage: React.FC = () => {
           }
           return item;
         })
-        .filter((item): item is CartItem => item !== null)
+        .filter(Boolean) as CartItem[]
     );
   };
 
   const handleRemoveItem = (id: string) => {
+    const itemToRemove = cartItems.find((item) => item.id === id);
     setCartItems((prev) => prev.filter((item) => item.id !== id));
-    showToast('Item dihapus dari keranjang');
+    if (itemToRemove) {
+      showToast(`"${itemToRemove.name}" dihapus dari keranjang`);
+    }
   };
 
   const handleClearCart = () => {
     if (cartItems.length === 0) return;
-    if (window.confirm('Kosongkan semua item di keranjang belanja?')) {
-      setCartItems([]);
-      showToast('Keranjang telah dikosongkan');
-    }
+    setIsClearCartModalOpen(true);
+  };
+
+  const handleConfirmClearCart = () => {
+    setCartItems([]);
+    setIsClearCartModalOpen(false);
+    showToast('Keranjang belanja berhasil dikosongkan');
   };
 
   const handleResetTransaction = () => {
@@ -190,7 +215,7 @@ export const PosPage: React.FC = () => {
         name: 'Kopi Hitam 200g',
         price: 15000,
         qty: 1,
-        sku: 'KOP-0192',
+        code: 'KOP-0192',
       },
       {
         id: 'gula',
@@ -198,7 +223,7 @@ export const PosPage: React.FC = () => {
         name: 'Gula Pasir 1kg',
         price: 16000,
         qty: 2,
-        sku: 'GUL-0021',
+        code: 'GUL-0021',
       },
     ]);
     setCashGiven(50000);
@@ -215,7 +240,7 @@ export const PosPage: React.FC = () => {
 
   const handleOpenReceipt = () => {
     if (cartItems.length === 0) {
-      alert('Keranjang masih kosong. Pilih produk terlebih dahulu!');
+      showToast('Keranjang masih kosong. Pilih produk terlebih dahulu!');
       return;
     }
     setIsReceiptOpen(true);
@@ -273,14 +298,14 @@ export const PosPage: React.FC = () => {
                 <span className="text-base font-bold text-on-surface">38 Struk</span>
               </div>
             </div>
-            <button
+            <Button
+              variant="secondary"
               onClick={() => setIsBarcodeOpen(true)}
-              className="h-10 px-3.5 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
-              type="button"
+              leftIcon={<ScanBarcode className="w-5 h-5" />}
+              className="h-10 px-3.5 rounded-lg"
             >
-              <ScanBarcode className="w-5 h-5" />
               <span className="hidden md:inline">Scanner Barcode</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -290,57 +315,60 @@ export const PosPage: React.FC = () => {
           <section className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
             {/* Filter & Search Toolbar Card */}
             <div className="bg-surface-card rounded-xl p-4 shadow-sm border border-border-subtle/60 flex flex-col sm:flex-row items-center gap-3">
-              {/* Search Bar */}
-              <div className="relative flex-1 w-full">
-                <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input
+              {/* Search Bar with TextField */}
+              <div className="flex-1 w-full">
+                <TextField
                   ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cari nama produk atau scan barcode (F2)..."
-                  type="text"
-                  className="w-full h-11 pl-11 pr-10 rounded-lg bg-surface-bg text-on-surface placeholder:text-text-muted text-sm outline-none ring-1 ring-border-subtle focus:ring-2 focus:ring-primary transition-all"
+                  leftIcon={<Search className="w-5 h-5 text-text-muted" />}
+                  rightElement={
+                    searchQuery ? (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="text-text-muted hover:text-on-surface cursor-pointer p-1"
+                        type="button"
+                        title="Hapus pencarian"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    ) : null
+                  }
+                  className="bg-surface-bg border-border-subtle h-11"
+                  containerClassName="w-full"
                 />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-on-surface cursor-pointer"
-                    type="button"
-                    title="Hapus pencarian"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
               </div>
 
               {/* Category Select Dropdown */}
               <div className="w-full sm:w-auto flex items-center gap-2 shrink-0">
-                <div className="relative w-full sm:w-48">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full h-11 appearance-none px-3.5 pr-9 rounded-lg bg-surface-bg text-on-surface text-sm ring-1 ring-border-subtle focus:ring-2 focus:ring-primary outline-none cursor-pointer"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-5 h-5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted" />
+                <div className="w-full sm:w-48">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="h-11 bg-surface-bg border-border-subtle rounded-lg text-sm text-on-surface hover:bg-surface-bg focus-visible:border-primary focus-visible:ring-primary/20">
+                      <SelectValue placeholder="Pilih Kategori" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Quick Refresh Button */}
-                <button
+                <Button
+                  variant="secondary"
+                  size="icon"
                   onClick={handleRefreshCatalog}
-                  className="h-11 w-11 shrink-0 rounded-lg bg-surface-bg hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer"
+                  className="h-11 w-11 shrink-0 rounded-lg bg-surface-bg hover:bg-surface-container-high"
                   title="Perbarui Data Stok Produk"
-                  type="button"
                 >
                   <RotateCw
                     className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
                   />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -351,17 +379,17 @@ export const PosPage: React.FC = () => {
                 const label = cat === 'Semua Kategori' ? 'Semua' : cat;
                 const count = categoryCounts[cat] ?? 0;
                 return (
-                  <button
+                  <Button
                     key={cat}
+                    variant={isActive ? 'primary' : 'secondary'}
+                    size="sm"
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium shrink-0 shadow-xs transition-all cursor-pointer ${isActive
-                        ? 'bg-primary text-on-primary font-semibold'
-                        : 'bg-surface-card hover:bg-surface-container text-on-surface-variant'
-                      }`}
-                    type="button"
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium shrink-0 shadow-xs ${
+                      !isActive && 'bg-surface-card hover:bg-surface-container text-on-surface-variant'
+                    }`}
                   >
                     {label} ({count})
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -372,16 +400,16 @@ export const PosPage: React.FC = () => {
                 <Search className="w-10 h-10 opacity-30 mb-2" />
                 <p className="text-base font-medium">Tidak ada produk yang sesuai</p>
                 <p className="text-xs">Coba ubah kata kunci pencarian atau kategori filter</p>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedCategory('Semua Kategori');
                   }}
-                  className="mt-3 px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface text-sm transition-colors cursor-pointer"
-                  type="button"
+                  className="mt-3 px-4 py-2 rounded-lg"
                 >
                   Reset Filter
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5">
@@ -409,15 +437,16 @@ export const PosPage: React.FC = () => {
                     {totalItemsCount} Item
                   </span>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={handleClearCart}
                   disabled={cartItems.length === 0}
-                  className="text-xs text-status-danger hover:bg-error-container/40 disabled:opacity-40 disabled:hover:bg-transparent px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
-                  type="button"
+                  leftIcon={<Trash2 className="w-4 h-4" />}
+                  className="text-xs text-status-danger hover:bg-error-container/40 hover:text-status-danger px-2.5 py-1 rounded-lg h-auto"
                 >
-                  <Trash2 className="w-4 h-4" />
                   Kosongkan
-                </button>
+                </Button>
               </div>
 
               {/* Active Cart Item List */}
@@ -466,39 +495,30 @@ export const PosPage: React.FC = () => {
                   Metode Pembayaran
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  <button
+                  <Button
+                    variant={paymentMethod === 'tunai' ? 'primary' : 'secondary'}
                     onClick={() => setPaymentMethod('tunai')}
-                    className={`h-11 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer ${paymentMethod === 'tunai'
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-surface-bg hover:bg-surface-container text-on-surface-variant'
-                      }`}
-                    type="button"
+                    leftIcon={<Banknote className="w-4 h-4" />}
+                    className="h-11 text-sm font-semibold rounded-lg"
                   >
-                    <Banknote className="w-4 h-4" />
-                    <span>Tunai</span>
-                  </button>
-                  <button
+                    Tunai
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'qris' ? 'primary' : 'secondary'}
                     onClick={() => setPaymentMethod('qris')}
-                    className={`h-11 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer ${paymentMethod === 'qris'
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-surface-bg hover:bg-surface-container text-on-surface-variant'
-                      }`}
-                    type="button"
+                    leftIcon={<QrCode className="w-4 h-4" />}
+                    className="h-11 text-sm font-semibold rounded-lg"
                   >
-                    <QrCode className="w-4 h-4" />
-                    <span>QRIS</span>
-                  </button>
-                  <button
+                    QRIS
+                  </Button>
+                  <Button
+                    variant={paymentMethod === 'transfer' ? 'primary' : 'secondary'}
                     onClick={() => setPaymentMethod('transfer')}
-                    className={`h-11 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer ${paymentMethod === 'transfer'
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-surface-bg hover:bg-surface-container text-on-surface-variant'
-                      }`}
-                    type="button"
+                    leftIcon={<Building2 className="w-4 h-4" />}
+                    className="h-11 text-sm font-semibold rounded-lg"
                   >
-                    <Building2 className="w-4 h-4" />
-                    <span>Transfer</span>
-                  </button>
+                    Transfer
+                  </Button>
                 </div>
               </div>
 
@@ -506,68 +526,65 @@ export const PosPage: React.FC = () => {
               {paymentMethod === 'tunai' && (
                 <div className="mt-4 p-3.5 rounded-xl bg-surface-container-low flex flex-col gap-3">
                   <div>
-                    <label
-                      htmlFor="cashGivenInput"
-                      className="block text-xs font-semibold text-on-surface-variant mb-1"
-                    >
-                      Nominal Diterima (Rp)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-text-muted">
-                        Rp
-                      </span>
-                      <input
-                        id="cashGivenInput"
-                        value={cashGiven || ''}
-                        onChange={(e) => setCashGiven(Number(e.target.value) || 0)}
-                        type="number"
-                        className="w-full h-11 pl-10 pr-3 rounded-lg bg-surface-card text-on-surface text-lg font-bold outline-none ring-1 ring-border-subtle focus:ring-2 focus:ring-primary text-right"
-                      />
-                    </div>
+                    <TextField
+                      id="cashGivenInput"
+                      label="Nominal Diterima (Rp)"
+                      type="number"
+                      value={cashGiven || ''}
+                      onChange={(e) => setCashGiven(Number(e.target.value) || 0)}
+                      leftIcon={<span className="text-sm font-bold text-text-muted">Rp</span>}
+                      className="bg-surface-card border-border-subtle text-right text-lg font-bold h-11"
+                    />
                   </div>
 
                   {/* Quick Denomination Chips */}
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setCashGiven(totalBill)}
-                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-on-surface text-xs font-bold shadow-xs transition-all cursor-pointer"
-                      type="button"
+                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-xs font-bold"
                     >
                       Uang Pas
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setCashGiven(50000)}
-                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-on-surface text-xs font-bold shadow-xs transition-all cursor-pointer"
-                      type="button"
+                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-xs font-bold"
                     >
                       Rp 50.000
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setCashGiven(100000)}
-                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-on-surface text-xs font-bold shadow-xs transition-all cursor-pointer"
-                      type="button"
+                      className="flex-1 h-9 rounded-lg bg-surface-card hover:bg-primary/10 hover:text-primary text-xs font-bold"
                     >
                       Rp 100.000
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Kembalian Info Box */}
                   <div
-                    className={`p-3 rounded-lg flex items-center justify-between ${change >= 0
+                    className={`p-3 rounded-lg flex items-center justify-between ${
+                      change >= 0
                         ? 'bg-emerald-50 text-emerald-900'
                         : 'bg-red-50 text-status-danger'
-                      }`}
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <CircleDollarSign
-                        className={`w-5 h-5 ${change >= 0 ? 'text-emerald-600' : 'text-status-danger'
-                          }`}
+                        className={`w-5 h-5 ${
+                          change >= 0 ? 'text-emerald-600' : 'text-status-danger'
+                        }`}
                       />
                       <span className="text-sm font-semibold">Kembalian:</span>
                     </div>
                     <span
-                      className={`text-lg font-bold ${change >= 0 ? 'text-emerald-700' : 'text-status-danger'
-                        }`}
+                      className={`text-lg font-bold ${
+                        change >= 0 ? 'text-emerald-700' : 'text-status-danger'
+                      }`}
                     >
                       {change >= 0
                         ? formatRupiah(change)
@@ -579,21 +596,22 @@ export const PosPage: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="mt-4 flex flex-col gap-2">
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
                   onClick={handleOpenReceipt}
-                  className="w-full h-12 rounded-xl bg-primary hover:bg-primary-container text-on-primary text-base font-bold flex items-center justify-center gap-2.5 shadow-md active:scale-[0.99] transition-all cursor-pointer"
-                  type="button"
+                  leftIcon={<Receipt className="w-5 h-5" />}
+                  className="w-full h-12 text-base font-bold shadow-md"
                 >
-                  <Receipt className="w-5 h-5" />
-                  <span>BAYAR & CETAK STRUK</span>
-                </button>
-                <button
+                  BAYAR & CETAK STRUK
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={handleResetTransaction}
-                  className="w-full h-10 rounded-xl bg-surface-bg hover:bg-surface-container text-on-surface-variant text-sm font-medium transition-colors cursor-pointer"
-                  type="button"
+                  className="w-full h-10 text-on-surface-variant text-sm font-medium hover:bg-surface-container"
                 >
                   Batal / Reset Transaksi (ESC)
-                </button>
+                </Button>
               </div>
             </div>
           </aside>
@@ -621,9 +639,50 @@ export const PosPage: React.FC = () => {
         onScanMock={handleQuickScanMock}
       />
 
+      {/* DIALOG: Konfirmasi Kosongkan Keranjang */}
+      <Dialog open={isClearCartModalOpen} onOpenChange={setIsClearCartModalOpen}>
+        <DialogContent size="sm" className="rounded-2xl border border-border-subtle overflow-hidden">
+          <DialogHeader className="px-5 py-4 border-b border-border-subtle bg-red-50/50">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-red-600">
+              <Trash2 className="w-5 h-5 text-red-600" />
+              <span>Kosongkan Keranjang?</span>
+            </DialogTitle>
+            <DialogDescription>
+              Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="p-5">
+            <p className="text-sm text-on-surface-variant leading-relaxed">
+              Apakah Anda yakin ingin menghapus seluruh <strong className="text-on-surface font-bold">{totalItemsCount} item</strong> dari keranjang belanja?
+            </p>
+          </DialogBody>
+          <DialogFooter className="px-5 py-3.5 bg-surface-container-high/40 border-t border-border-subtle flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsClearCartModalOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmClearCart}
+            >
+              Ya, Kosongkan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       {/* Toast Notification */}
-      <Toast toast={toast} />
+      <Toast
+        toast={toast}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };
+
 export default PosPage;

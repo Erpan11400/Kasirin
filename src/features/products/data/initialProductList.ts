@@ -35,7 +35,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-1',
     name: 'Kopi Hitam Bubuk 200g',
-    sku: 'SKU-KPH-001',
+    code: 'SKU-KPH-001',
     category: 'Minuman',
     price: 15000,
     stock: 24,
@@ -47,7 +47,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-2',
     name: 'Beras Pandan Wangi 5kg',
-    sku: 'SKU-BRS-005',
+    code: 'SKU-BRS-005',
     category: 'Sembako',
     price: 68500,
     stock: 18,
@@ -59,7 +59,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-3',
     name: 'Minyak Goreng Sawit 2L Refill',
-    sku: 'SKU-MYK-002',
+    code: 'SKU-MYK-002',
     category: 'Sembako',
     price: 34000,
     stock: 5,
@@ -71,7 +71,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-4',
     name: 'Gula Pasir Kristal Putih 1kg',
-    sku: 'SKU-GLA-001',
+    code: 'SKU-GLA-001',
     category: 'Sembako',
     price: 17500,
     stock: 42,
@@ -83,7 +83,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-5',
     name: 'Mi Instan Goreng Spesial 85g',
-    sku: 'SKU-MIE-085',
+    code: 'SKU-MIE-085',
     category: 'Makanan Ringan',
     price: 3500,
     stock: 96,
@@ -95,7 +95,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-6',
     name: 'Teh Celup Melati Kotak 25 Kantong',
-    sku: 'SKU-TEH-025',
+    code: 'SKU-TEH-025',
     category: 'Minuman',
     price: 7000,
     stock: 14,
@@ -107,7 +107,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-7',
     name: 'Garam Halus Beriodium 250g',
-    sku: 'SKU-GRM-250',
+    code: 'SKU-GRM-250',
     category: 'Bumbu & Dapur',
     price: 3000,
     stock: 0,
@@ -120,7 +120,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-8',
     name: 'Tepung Terigu Segitiga 1kg',
-    sku: 'SKU-TPG-001',
+    code: 'SKU-TPG-001',
     category: 'Sembako',
     price: 13000,
     stock: 22,
@@ -132,7 +132,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-9',
     name: 'Susu Kental Manis Kaleng 370g',
-    sku: 'SKU-SKM-001',
+    code: 'SKU-SKM-001',
     category: 'Sembako',
     price: 12500,
     stock: 18,
@@ -144,7 +144,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-10',
     name: 'Kecap Manis Botol 275ml',
-    sku: 'SKU-KCP-001',
+    code: 'SKU-KCP-001',
     category: 'Bumbu & Dapur',
     price: 11000,
     stock: 4, // Menipis 2
@@ -156,7 +156,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-11',
     name: 'Saus Sambal Botol 335ml',
-    sku: 'SKU-SAS-001',
+    code: 'SKU-SAS-001',
     category: 'Bumbu & Dapur',
     price: 9500,
     stock: 3, // Menipis 3
@@ -168,7 +168,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-12',
     name: 'Air Mineral Botol 600ml',
-    sku: 'SKU-AMB-600',
+    code: 'SKU-AMB-600',
     category: 'Minuman',
     price: 3500,
     stock: 48,
@@ -180,7 +180,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-13',
     name: 'Minuman Isotonik 500ml',
-    sku: 'SKU-ISO-500',
+    code: 'SKU-ISO-500',
     category: 'Minuman',
     price: 7500,
     stock: 24,
@@ -192,7 +192,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-14',
     name: 'Minuman Soda Kaleng 330ml',
-    sku: 'SKU-SOD-330',
+    code: 'SKU-SOD-330',
     category: 'Minuman',
     price: 6500,
     stock: 30,
@@ -204,7 +204,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-15',
     name: 'Keripik Singkong Balado 150g',
-    sku: 'SKU-KSB-150',
+    code: 'SKU-KSB-150',
     category: 'Makanan Ringan',
     price: 12000,
     stock: 20,
@@ -216,7 +216,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-16',
     name: 'Biskuit Cokelat Sandwich 120g',
-    sku: 'SKU-BIS-120',
+    code: 'SKU-BIS-120',
     category: 'Makanan Ringan',
     price: 8500,
     stock: 35,
@@ -228,7 +228,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-17',
     name: 'Kacang Kulit Sangrai 200g',
-    sku: 'SKU-KCG-200',
+    code: 'SKU-KCG-200',
     category: 'Makanan Ringan',
     price: 14000,
     stock: 16,
@@ -240,7 +240,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-18',
     name: 'Wafer Cokelat Renyah 145g',
-    sku: 'SKU-WFR-145',
+    code: 'SKU-WFR-145',
     category: 'Makanan Ringan',
     price: 9000,
     stock: 28,
@@ -252,7 +252,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-19',
     name: 'Beras Setra Ramos 5kg',
-    sku: 'SKU-BRS-006',
+    code: 'SKU-BRS-006',
     category: 'Sembako',
     price: 65000,
     stock: 15,
@@ -264,7 +264,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-20',
     name: 'Beras Merah Organik 2kg',
-    sku: 'SKU-BRS-002',
+    code: 'SKU-BRS-002',
     category: 'Sembako',
     price: 38000,
     stock: 10,
@@ -276,7 +276,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-21',
     name: 'Minyak Goreng Botol 1L',
-    sku: 'SKU-MYK-001',
+    code: 'SKU-MYK-001',
     category: 'Sembako',
     price: 18000,
     stock: 25,
@@ -288,7 +288,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-22',
     name: 'Gula Merah Aren 500g',
-    sku: 'SKU-GLA-002',
+    code: 'SKU-GLA-002',
     category: 'Sembako',
     price: 15000,
     stock: 14,
@@ -300,7 +300,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-23',
     name: 'Telur Ayam Negeri 1kg',
-    sku: 'SKU-TLR-001',
+    code: 'SKU-TLR-001',
     category: 'Sembako',
     price: 28000,
     stock: 30,
@@ -312,7 +312,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-24',
     name: 'Mentega Margarin Sachet 200g',
-    sku: 'SKU-MTG-001',
+    code: 'SKU-MTG-001',
     category: 'Sembako',
     price: 8500,
     stock: 36,
@@ -324,7 +324,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-25',
     name: 'Tepung Beras Putih 500g',
-    sku: 'SKU-TPG-002',
+    code: 'SKU-TPG-002',
     category: 'Sembako',
     price: 7500,
     stock: 20,
@@ -336,7 +336,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-26',
     name: 'Kopi Susu Instan Renceng (10s)',
-    sku: 'SKU-KPS-010',
+    code: 'SKU-KPS-010',
     category: 'Minuman',
     price: 16000,
     stock: 18,
@@ -348,7 +348,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-27',
     name: 'Susu UHT Full Cream 1L',
-    sku: 'SKU-UHT-001',
+    code: 'SKU-UHT-001',
     category: 'Sembako',
     price: 19500,
     stock: 16,
@@ -360,7 +360,7 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   {
     id: 'prod-28',
     name: 'Minyak Goreng Kelapa 1L',
-    sku: 'SKU-MYK-003',
+    code: 'SKU-MYK-003',
     category: 'Sembako',
     price: 31000,
     stock: 12,

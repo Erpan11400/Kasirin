@@ -2,6 +2,7 @@ import React from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import type { CartItem } from '../../../types/pos';
 import { formatRupiah } from '../../../lib/formatters';
+import { Button } from '../../../components/ui/Button';
 
 interface CartItemRowProps {
   item: CartItem;
@@ -32,37 +33,40 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
 
       <div className="flex items-center gap-1.5 shrink-0">
         {/* Stepper controls */}
-        <div className="flex items-center bg-surface-card rounded-lg p-0.5 shadow-sm border border-border-subtle">
-          <button
+        <div className="flex items-center bg-surface-card rounded-lg p-0.5 shadow-xs border border-border-subtle">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onUpdateQty(item.id, -1)}
-            className="w-7 h-7 rounded flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
-            type="button"
+            className="w-7 h-7 p-0 rounded text-on-surface hover:bg-surface-container active:scale-95"
             aria-label="Kurangi jumlah"
           >
-            <Minus className="w-4 h-4" />
-          </button>
-          <span className="w-7 text-center text-base font-bold text-on-surface">
+            <Minus className="w-3.5 h-3.5" />
+          </Button>
+          <span className="w-7 text-center text-sm font-bold text-on-surface">
             {item.qty}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onUpdateQty(item.id, 1)}
-            className="w-7 h-7 rounded flex items-center justify-center text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
-            type="button"
+            className="w-7 h-7 p-0 rounded text-on-surface hover:bg-surface-container active:scale-95"
             aria-label="Tambah jumlah"
           >
-            <Plus className="w-4 h-4" />
-          </button>
+            <Plus className="w-3.5 h-3.5" />
+          </Button>
         </div>
 
         {/* Delete button */}
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => onRemove(item.id)}
-          className="w-8 h-8 rounded-lg text-text-muted hover:text-status-danger hover:bg-red-50 flex items-center justify-center transition-colors cursor-pointer"
-          type="button"
+          className="w-8 h-8 p-0 rounded-lg text-text-muted hover:text-status-danger hover:bg-red-50"
           title="Hapus item"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );
