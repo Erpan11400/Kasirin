@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Store,
   ScanBarcode,
@@ -12,9 +12,16 @@ import {
   Building2,
   CircleDollarSign,
   Receipt,
+  AlertCircle,
 } from 'lucide-react';
 import type { Product, CartItem, PaymentMethod, ToastInfo } from '../../types/pos';
-import { INITIAL_PRODUCTS, CATEGORIES } from './data/initialProducts';
+import type { CategoryItem } from '../../types/products';
+import { getProducts } from '../../services/ProductAction';
+import { getCategories } from '../../services/CategoryAction';
+import {
+  createTransaction,
+  type BackendTransactionResponse,
+} from '../../services/TransactionAction';
 import { ProductCard } from './components/ProductCard';
 import { CartItemRow } from './components/CartItemRow';
 import { ReceiptModal } from './components/ReceiptModal';
@@ -42,38 +49,28 @@ import {
 } from '../../components/ui/Select';
 
 export const PosPage: React.FC = () => {
-  // Catalog State
-  const [products] = useState<Product[]>(INITIAL_PRODUCTS);
+  // Catalog & Category State from Backend
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua Kategori');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Cart State (Initialized with the 2 items from HTML)
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 'kopi',
-      productId: 'kopi',
-      name: 'Kopi Hitam 200g',
-      price: 15000,
-      qty: 1,
-      code: 'KOP-0192',
-    },
-    {
-      id: 'gula',
-      productId: 'gula',
-      name: 'Gula Pasir 1kg',
-      price: 16000,
-      qty: 2,
-      code: 'GUL-0021',
-    },
-  ]);
+  // Cart State
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Tender / Payment State
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('tunai');
-  const [cashGiven, setCashGiven] = useState<number>(50000);
+  const [cashGiven, setCashGiven] = useState<number>(0);
+  const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
+  const [lastCreatedTransaction, setLastCreatedTransaction] =
+    useState<BackendTransactionResponse | null>(null);
 
   // Modals & Feedback
   const [isReceiptOpen, setIsReceiptOpen] = useState<boolean>(false);
+  const [isConfirmPaymentOpen, setIsConfirmPaymentOpen] = useState<boolean>(false);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState<boolean>(false);
   const [isClearCartModalOpen, setIsClearCartModalOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastInfo>({ show: false, message: '' });
@@ -91,6 +88,36 @@ export const PosPage: React.FC = () => {
     }, 2500);
   };
 
+  // Fetch products and categories from backend
+  const fetchPosData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true);
+      setError(null);
+      const fetchedCategories = await getCategories().catch(() => []);
+      setCategories(fetchedCategories);
+
+      const fetchedProducts = await getProducts(fetchedCategories);
+      const posProducts: Product[] = fetchedProducts.map((p) => ({
+        ...p,
+        isLowStock: p.stock > 0 && p.stock <= 5,
+      }));
+      setProducts(posProducts);
+    } catch (err: any) {
+      console.error('Error saat memuat produk POS:', err);
+      setError(err?.message || 'Gagal memuat data produk dari server');
+      if (!silent) {
+        showToast('Gagal memuat data produk dari server');
+      }
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPosData();
+  }, [fetchPosData]);
+
   // Keyboard Shortcuts (F2 for Search, Escape to Close Modals)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,6 +126,7 @@ export const PosPage: React.FC = () => {
         searchInputRef.current?.focus();
       } else if (e.key === 'Escape') {
         setIsReceiptOpen(false);
+        setIsConfirmPaymentOpen(false);
         setIsBarcodeOpen(false);
       }
     };
@@ -106,22 +134,35 @@ export const PosPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Category counts
+  // Dynamic Available Categories
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    set.add('Semua Kategori');
+    categories.forEach((c) => {
+      if (c.name) set.add(c.name);
+    });
+    products.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return Array.from(set);
+  }, [categories, products]);
+
+  // Dynamic Category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {
       'Semua Kategori': products.length,
-      Sembako: 0,
-      Minuman: 0,
-      'Makanan Ringan': 0,
-      'Bumbu Dapur': 0,
     };
-    products.forEach((p) => {
-      if (counts[p.category] !== undefined) {
-        counts[p.category]++;
+    availableCategories.forEach((cat) => {
+      if (cat !== 'Semua Kategori') {
+        counts[cat] = 0;
       }
     });
+    products.forEach((p) => {
+      const catName = p.category || 'Tanpa Kategori';
+      counts[catName] = (counts[catName] || 0) + 1;
+    });
     return counts;
-  }, [products]);
+  }, [products, availableCategories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -150,11 +191,20 @@ export const PosPage: React.FC = () => {
   const totalBill = subtotal + tax;
   const change = cashGiven - totalBill;
 
-  // Cart operations
+  // Cart operations with stock validation
   const handleAddToCart = (product: Product) => {
+    if (product.stock <= 0) {
+      showToast(`Stok untuk "${product.name}" habis!`);
+      return;
+    }
+
     setCartItems((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
+        if (existing.qty >= product.stock) {
+          showToast(`Jumlah produk mencapai batas stok (${product.stock})`);
+          return prev;
+        }
         return prev.map((item) =>
           item.productId === product.id ? { ...item, qty: item.qty + 1 } : item
         );
@@ -180,7 +230,13 @@ export const PosPage: React.FC = () => {
         .map((item) => {
           if (item.id === id) {
             const newQty = item.qty + delta;
-            return newQty > 0 ? { ...item, qty: newQty } : null;
+            if (newQty <= 0) return null;
+            const matchedProduct = products.find((p) => p.id === item.productId);
+            if (delta > 0 && matchedProduct && newQty > matchedProduct.stock) {
+              showToast(`Jumlah melebihi stok yang tersedia (${matchedProduct.stock})`);
+              return item;
+            }
+            return { ...item, qty: newQty };
           }
           return item;
         })
@@ -203,39 +259,23 @@ export const PosPage: React.FC = () => {
 
   const handleConfirmClearCart = () => {
     setCartItems([]);
+    setCashGiven(0);
     setIsClearCartModalOpen(false);
     showToast('Keranjang belanja berhasil dikosongkan');
   };
 
   const handleResetTransaction = () => {
-    setCartItems([
-      {
-        id: 'kopi',
-        productId: 'kopi',
-        name: 'Kopi Hitam 200g',
-        price: 15000,
-        qty: 1,
-        code: 'KOP-0192',
-      },
-      {
-        id: 'gula',
-        productId: 'gula',
-        name: 'Gula Pasir 1kg',
-        price: 16000,
-        qty: 2,
-        code: 'GUL-0021',
-      },
-    ]);
-    setCashGiven(50000);
+    setCartItems([]);
+    setCashGiven(0);
+    setLastCreatedTransaction(null);
     showToast('Transaksi baru siap dimulai');
   };
 
   const handleRefreshCatalog = () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      showToast('Data stok & katalog berhasil disinkronisasi');
-    }, 500);
+    fetchPosData(true).then(() => {
+      showToast('Data produk & stok berhasil disinkronisasi');
+    });
   };
 
   const handleOpenReceipt = () => {
@@ -243,7 +283,47 @@ export const PosPage: React.FC = () => {
       showToast('Keranjang masih kosong. Pilih produk terlebih dahulu!');
       return;
     }
-    setIsReceiptOpen(true);
+    if (paymentMethod === 'tunai' && cashGiven < totalBill) {
+      showToast('Nominal tunai yang diterima kurang dari total tagihan!');
+      return;
+    }
+    setIsConfirmPaymentOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      const payloadPaymentMethod: 'cash' | 'qris' | 'transfer' =
+        paymentMethod === 'tunai' ? 'cash' : paymentMethod;
+
+      const payloadPaidAmount =
+        paymentMethod === 'tunai' ? cashGiven : totalBill;
+
+      const payloadItems = cartItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.qty,
+      }));
+
+      const transactionResult = await createTransaction({
+        paymentMethod: payloadPaymentMethod,
+        paidAmount: payloadPaidAmount,
+        items: payloadItems,
+      });
+
+      setLastCreatedTransaction(transactionResult);
+      setIsConfirmPaymentOpen(false);
+      setIsReceiptOpen(true);
+      showToast(`Transaksi ${transactionResult.invoiceNumber} berhasil!`);
+
+      // Refresh data produk agar stok terupdate
+      fetchPosData(true);
+    } catch (err: any) {
+      console.error('Gagal memproses transaksi:', err);
+      showToast(err?.message || 'Gagal memproses transaksi.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const handlePrintReceipt = () => {
@@ -254,11 +334,33 @@ export const PosPage: React.FC = () => {
     }, 1200);
   };
 
+  const firstAvailableProduct = useMemo(() => {
+    return products.find((p) => p.stock > 0) || products[0];
+  }, [products]);
+
   const handleQuickScanMock = () => {
     setIsBarcodeOpen(false);
-    const beras = products.find((p) => p.id === 'beras');
-    if (beras) {
-      handleAddToCart(beras);
+    if (firstAvailableProduct) {
+      handleAddToCart(firstAvailableProduct);
+    } else {
+      showToast('Tidak ada produk untuk discan');
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const matched = products.find(
+        (p) =>
+          p.code?.toLowerCase() === q ||
+          p.name.toLowerCase() === q ||
+          p.id.toLowerCase() === q
+      );
+      if (matched) {
+        e.preventDefault();
+        handleAddToCart(matched);
+        setSearchQuery('');
+      }
     }
   };
 
@@ -280,7 +382,7 @@ export const PosPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-text-muted">
-                Kasir Bertugas: <strong className="text-on-surface font-semibold">Bu Dewi</strong> • Sesi: Pagi (07:00 - 15:30 WIB)
+                Kasir Bertugas: <strong className="text-on-surface font-semibold">Kasir</strong> • Sesi: Pagi (07:00 - 15:30 WIB)
               </p>
             </div>
           </div>
@@ -289,13 +391,15 @@ export const PosPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-3 px-3.5 py-1.5 rounded-lg bg-surface-container-low">
               <div className="flex flex-col">
-                <span className="text-xs text-text-muted">Total Penjualan Shift Ini</span>
-                <span className="text-base font-bold text-primary">Rp 1.482.500</span>
+                <span className="text-xs text-text-muted">Total Produk Aktif</span>
+                <span className="text-base font-bold text-primary">{products.length} Menu</span>
               </div>
               <span className="w-px h-6 bg-border-subtle"></span>
               <div className="flex flex-col">
-                <span className="text-xs text-text-muted">Transaksi Selesai</span>
-                <span className="text-base font-bold text-on-surface">38 Struk</span>
+                <span className="text-xs text-text-muted">Kategori</span>
+                <span className="text-base font-bold text-on-surface">
+                  {availableCategories.length - 1} Kategori
+                </span>
               </div>
             </div>
             <Button
@@ -321,6 +425,7 @@ export const PosPage: React.FC = () => {
                   ref={searchInputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
                   placeholder="Cari nama produk atau scan barcode (F2)..."
                   leftIcon={<Search className="w-5 h-5 text-text-muted" />}
                   rightElement={
@@ -342,17 +447,27 @@ export const PosPage: React.FC = () => {
 
               {/* Category Select Dropdown */}
               <div className="w-full sm:w-auto flex items-center gap-2 shrink-0">
-                <div className="w-full sm:w-48">
+                <div className="w-full sm:w-56">
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger className="h-11 bg-surface-bg border-border-subtle rounded-lg text-sm text-on-surface hover:bg-surface-bg focus-visible:border-primary focus-visible:ring-primary/20">
-                      <SelectValue placeholder="Pilih Kategori" />
+                      <SelectValue placeholder="Pilih Kategori">
+                        {selectedCategory} ({categoryCounts[selectedCategory] ?? 0})
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
+                      {availableCategories.map((cat) => {
+                        const count = categoryCounts[cat] ?? 0;
+                        return (
+                          <SelectItem key={cat} value={cat}>
+                            <div className="flex items-center justify-between w-full gap-3">
+                              <span>{cat}</span>
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface-container text-text-muted">
+                                {count}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -362,8 +477,9 @@ export const PosPage: React.FC = () => {
                   variant="secondary"
                   size="icon"
                   onClick={handleRefreshCatalog}
+                  disabled={isRefreshing || isLoading}
                   className="h-11 w-11 shrink-0 rounded-lg bg-surface-bg hover:bg-surface-container-high"
-                  title="Perbarui Data Stok Produk"
+                  title="Perbarui Data Stok Produk dari Server"
                 >
                   <RotateCw
                     className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
@@ -372,33 +488,43 @@ export const PosPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mt-1 scrollbar-none">
-              {CATEGORIES.map((cat) => {
-                const isActive = selectedCategory === cat;
-                const label = cat === 'Semua Kategori' ? 'Semua' : cat;
-                const count = categoryCounts[cat] ?? 0;
-                return (
-                  <Button
-                    key={cat}
-                    variant={isActive ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium shrink-0 shadow-xs ${
-                      !isActive && 'bg-surface-card hover:bg-surface-container text-on-surface-variant'
-                    }`}
+            {/* Loading Skeleton */}
+            {isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <div
+                    key={n}
+                    className="bg-surface-card rounded-xl overflow-hidden shadow-sm border border-border-subtle/50 animate-pulse flex flex-col"
                   >
-                    {label} ({count})
-                  </Button>
-                );
-              })}
-            </div>
-
-            {/* Catalog Responsive Grid */}
-            {filteredProducts.length === 0 ? (
-              <div className="bg-surface-card rounded-xl p-12 text-center text-text-muted shadow-sm flex flex-col items-center justify-center gap-2">
+                    <div className="w-full aspect-[4/3] bg-surface-container-high"></div>
+                    <div className="p-3 flex flex-col gap-2">
+                      <div className="h-4 bg-surface-container-high rounded w-3/4"></div>
+                      <div className="h-3 bg-surface-container-high rounded w-1/2"></div>
+                      <div className="flex justify-between items-center pt-2">
+                        <div className="h-5 bg-surface-container-high rounded w-20"></div>
+                        <div className="h-8 w-8 bg-surface-container-high rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : error && products.length === 0 ? (
+              <div className="bg-surface-card rounded-xl p-12 text-center text-text-muted shadow-sm flex flex-col items-center justify-center gap-2 border border-border-subtle">
+                <AlertCircle className="w-10 h-10 text-status-danger mb-2" />
+                <p className="text-base font-semibold text-on-surface">Gagal Memuat Produk</p>
+                <p className="text-xs text-text-muted">{error}</p>
+                <Button
+                  variant="primary"
+                  onClick={() => fetchPosData()}
+                  className="mt-3 px-4 py-2 rounded-lg"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="bg-surface-card rounded-xl p-12 text-center text-text-muted shadow-sm flex flex-col items-center justify-center gap-2 border border-border-subtle">
                 <Search className="w-10 h-10 opacity-30 mb-2" />
-                <p className="text-base font-medium">Tidak ada produk yang sesuai</p>
+                <p className="text-base font-medium text-on-surface">Tidak ada produk yang sesuai</p>
                 <p className="text-xs">Coba ubah kata kunci pencarian atau kategori filter</p>
                 <Button
                   variant="secondary"
@@ -568,7 +694,7 @@ export const PosPage: React.FC = () => {
                   {/* Kembalian Info Box */}
                   <div
                     className={`p-3 rounded-lg flex items-center justify-between ${
-                      change >= 0
+                      cashGiven >= totalBill
                         ? 'bg-emerald-50 text-emerald-900'
                         : 'bg-red-50 text-status-danger'
                     }`}
@@ -576,17 +702,17 @@ export const PosPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <CircleDollarSign
                         className={`w-5 h-5 ${
-                          change >= 0 ? 'text-emerald-600' : 'text-status-danger'
+                          cashGiven >= totalBill ? 'text-emerald-600' : 'text-status-danger'
                         }`}
                       />
                       <span className="text-sm font-semibold">Kembalian:</span>
                     </div>
                     <span
                       className={`text-lg font-bold ${
-                        change >= 0 ? 'text-emerald-700' : 'text-status-danger'
+                        cashGiven >= totalBill ? 'text-emerald-700' : 'text-status-danger'
                       }`}
                     >
-                      {change >= 0
+                      {cashGiven >= totalBill
                         ? formatRupiah(change)
                         : `Kurang ${formatRupiah(Math.abs(change))}`}
                     </span>
@@ -618,17 +744,110 @@ export const PosPage: React.FC = () => {
         </div>
       </div>
 
+      {/* DIALOG: Konfirmasi Pembayaran & Cetak Struk */}
+      <Dialog open={isConfirmPaymentOpen} onOpenChange={setIsConfirmPaymentOpen}>
+        <DialogContent size="md" className="rounded-2xl border border-border-subtle overflow-hidden">
+          <DialogHeader className="px-5 py-4 border-b border-border-subtle bg-primary/5">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold text-on-surface">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <span>Konfirmasi Pembayaran</span>
+            </DialogTitle>
+            <DialogDescription>
+              Periksa kembali rincian transaksi sebelum memproses pembayaran dan mencetak struk.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogBody className="p-5 flex flex-col gap-4 text-on-surface">
+            {/* Payment Summary Box */}
+            <div className="bg-surface-container-low rounded-xl p-4 flex flex-col gap-2.5 border border-border-subtle/60">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-text-muted">Metode Pembayaran</span>
+                <span className="font-semibold uppercase px-2.5 py-0.5 rounded-full text-xs bg-primary-container text-on-primary-container">
+                  {paymentMethod === 'tunai' ? 'Tunai (Cash)' : paymentMethod.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-text-muted">Total Jumlah Item</span>
+                <span className="font-semibold text-on-surface">{totalItemsCount} pcs ({cartItems.length} jenis)</span>
+              </div>
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-border-subtle">
+                <span className="text-text-muted font-medium">Total Tagihan</span>
+                <span className="text-xl font-bold text-primary">{formatRupiah(totalBill)}</span>
+              </div>
+
+              {paymentMethod === 'tunai' && (
+                <>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-text-muted">Nominal Diterima</span>
+                    <span className="font-semibold text-on-surface">{formatRupiah(cashGiven)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm pt-1.5 mt-1 bg-emerald-50 text-emerald-900 px-3 py-2 rounded-lg">
+                    <span className="font-semibold text-emerald-800">Kembalian</span>
+                    <span className="font-bold text-base text-emerald-700">{formatRupiah(change)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Item preview list */}
+            <div>
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-2">
+                Rincian Pesanan ({cartItems.length} Item)
+              </span>
+              <div className="max-h-40 overflow-y-auto space-y-2 pr-1 text-sm divide-y divide-border-subtle/50">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center pt-2 first:pt-0">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className="font-medium text-on-surface truncate">{item.name}</p>
+                      <p className="text-xs text-text-muted">
+                        {formatRupiah(item.price)} × {item.qty}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-on-surface shrink-0">
+                      {formatRupiah(item.price * item.qty)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogFooter className="px-5 py-3.5 bg-surface-container-high/40 border-t border-border-subtle flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isProcessingPayment}
+              onClick={() => setIsConfirmPaymentOpen(false)}
+            >
+              Periksa Kembali
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isProcessingPayment}
+              onClick={handleConfirmPayment}
+              leftIcon={<Receipt className="w-4 h-4" />}
+            >
+              {isProcessingPayment ? 'Memproses Transaksi...' : 'Ya, Proses & Cetak Struk'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* MODAL: Thermal Receipt Struk Kasir (80mm preview) */}
       <ReceiptModal
         isOpen={isReceiptOpen}
         onClose={() => setIsReceiptOpen(false)}
         cartItems={cartItems}
-        subtotal={subtotal}
+        subtotal={lastCreatedTransaction ? lastCreatedTransaction.totalAmount : subtotal}
         tax={tax}
-        total={totalBill}
-        cashGiven={cashGiven}
-        change={change}
+        total={lastCreatedTransaction ? lastCreatedTransaction.totalAmount : totalBill}
+        cashGiven={paymentMethod === 'tunai' ? (lastCreatedTransaction ? lastCreatedTransaction.paidAmount : cashGiven) : (lastCreatedTransaction ? lastCreatedTransaction.totalAmount : totalBill)}
+        change={paymentMethod === 'tunai' ? (lastCreatedTransaction ? lastCreatedTransaction.changeAmount : change) : 0}
         paymentMethod={paymentMethod}
+        invoiceNumber={lastCreatedTransaction?.invoiceNumber}
         onPrint={handlePrintReceipt}
       />
 
@@ -637,6 +856,7 @@ export const PosPage: React.FC = () => {
         isOpen={isBarcodeOpen}
         onClose={() => setIsBarcodeOpen(false)}
         onScanMock={handleQuickScanMock}
+        mockProductName={firstAvailableProduct?.name || 'Produk'}
       />
 
       {/* DIALOG: Konfirmasi Kosongkan Keranjang */}
@@ -675,7 +895,6 @@ export const PosPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-
       {/* Toast Notification */}
       <Toast
         toast={toast}
@@ -686,3 +905,4 @@ export const PosPage: React.FC = () => {
 };
 
 export default PosPage;
+

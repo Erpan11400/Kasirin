@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckSquare } from 'lucide-react';
-
 interface BulkActionBannerProps {
   selectedCount: number;
   onBulkCategoryChange: () => void;

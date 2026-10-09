@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, Home, Lock } from 'lucide-react';
 import Button from '../ui/Button';
-
 export interface ForbiddenProps {
   title?: string;
   message?: string;

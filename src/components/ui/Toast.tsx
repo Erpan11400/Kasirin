@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export type ToastPosition =
@@ -30,7 +29,7 @@ export interface ToastProps {
   onClose?: () => void;
   icon?: React.ReactNode;
   className?: string;
-  toast?: ToastInfoObject;
+  toast?: ToastInfoObject | null;
 }
 
 const positionStyles: Record<ToastPosition, string> = {

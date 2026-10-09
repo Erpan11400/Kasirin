@@ -1,18 +1,8 @@
 import React from 'react';
 import { Calendar, Search, SlidersHorizontal, Download, Printer } from 'lucide-react';
-import type { PaymentFilter } from '../../../types/report';
+import type { PaymentFilter, ReportToolbarProps } from '../../../types/report';
 
-interface ReportToolbarProps {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
-  selectedPayment: PaymentFilter;
-  onPaymentChange: (pay: PaymentFilter) => void;
-  startDate: string;
-  endDate: string;
-  onDateRangeClick: () => void;
-  onExport: () => void;
-  onPrint: () => void;
-}
+export type { ReportToolbarProps };
 
 export const ReportToolbar: React.FC<ReportToolbarProps> = ({
   searchQuery,

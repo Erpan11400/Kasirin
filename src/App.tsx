@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { StoreProvider } from './context/StoreContext';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { GuestRoute } from './components/common/GuestRoute';
 import { NotFound } from './components/common/NotFound';
@@ -15,7 +16,8 @@ import Testing from './features/testing/Testing';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <StoreProvider>
+        <BrowserRouter>
         <Routes>
           {/* Guest / Public Only Routes (Diarahkan ke '/' jika sudah login) */}
           <Route element={<GuestRoute />}>
@@ -46,6 +48,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </StoreProvider>
     </AuthProvider>
   );
 }

@@ -8,17 +8,15 @@ import {
   DialogBody,
 } from '../../../components/ui/Dialog';
 import { Button } from '../../../components/ui/Button';
+import type { BarcodeModalProps } from '../../../types/pos';
 
-interface BarcodeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onScanMock: () => void;
-}
+export type { BarcodeModalProps };
 
 export const BarcodeModal: React.FC<BarcodeModalProps> = ({
   isOpen,
   onClose,
   onScanMock,
+  mockProductName = 'Produk',
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -62,7 +60,7 @@ export const BarcodeModal: React.FC<BarcodeModalProps> = ({
             onClick={onScanMock}
             className="w-full h-11 text-sm font-semibold rounded-xl"
           >
-            Simulasi Scan: Beras Pandan Wangi
+            Simulasi Scan: {mockProductName}
           </Button>
         </DialogBody>
       </DialogContent>

@@ -1,4 +1,10 @@
-import type { ApiResponse } from '../lib/api';
+import type { ApiResponse } from './api';
+
+export interface LoginPayload {
+  email?: string;
+  username?: string;
+  password?: string;
+}
 
 export interface UserInfo {
   name: string;

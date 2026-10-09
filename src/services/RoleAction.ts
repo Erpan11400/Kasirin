@@ -1,5 +1,11 @@
 import api, { type ApiResponse } from '../lib/api';
-import type { BackendRoleItem, RoleItem, RolePermissions } from '../types/users';
+import type {
+  BackendRoleItem,
+  RoleItem,
+  RolePermissions,
+  CreateRolePayload,
+  UpdateRolePayload,
+} from '../types/users';
 
 export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
   categories: { view: false, create: false, update: false, delete: false },
@@ -52,18 +58,7 @@ export const mapBackendRoleToRoleItem = (
   };
 };
 
-export interface CreateRolePayload {
-  name: string;
-  description?: string;
-  permissions: RolePermissions;
-}
-
-export interface UpdateRolePayload {
-  name?: string;
-  description?: string;
-  isSystemRole?: boolean;
-  permissions?: RolePermissions;
-}
+// export type { CreateRolePayload, UpdateRolePayload };
 
 /**
  * Mengambil seluruh data role dari backend route `GET /roles`

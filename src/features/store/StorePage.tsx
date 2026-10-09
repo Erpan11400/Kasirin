@@ -1,62 +1,67 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import type { StoreProfileData } from '../../types/store';
 import { DEFAULT_STORE_DATA } from './data/initialStoreData';
 import { StoreForm } from './components/StoreForm';
 import { ThermalReceiptPreview } from './components/ThermalReceiptPreview';
-import { SaveToast } from './components/SaveToast';
+import { Toast, type ToastType } from '../../components/ui/Toast';
+import { useStore } from '../../context/StoreContext';
 
 export const StorePage: React.FC = () => {
-  const [storeData, setStoreData] = useState<StoreProfileData>(() => {
-    const saved = localStorage.getItem('kasirin_store_profile');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return DEFAULT_STORE_DATA;
-      }
-    }
-    return DEFAULT_STORE_DATA;
-  });
+  const { store, updateStore, isSaving } = useStore();
+  const [formData, setFormData] = useState<StoreProfileData>(store);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Sinkronkan form saat data store dari server selesai di-fetch
+  useEffect(() => {
+    setFormData(store);
+  }, [store]);
 
   const handleChange = <K extends keyof StoreProfileData>(
     field: K,
     value: StoreProfileData[K]
   ) => {
-    setStoreData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
   const handleReset = () => {
-    setStoreData(DEFAULT_STORE_DATA);
+    setFormData(DEFAULT_STORE_DATA);
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      localStorage.setItem('kasirin_store_profile', JSON.stringify(storeData));
-
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
-      setShowToast(true);
-      toastTimeoutRef.current = setTimeout(() => {
-        setShowToast(false);
-      }, 3800);
-    }, 600);
+  const handleSave = async () => {
+    try {
+      await updateStore(formData);
+      setToast({
+        message: 'Perubahan profil toko berhasil disimpan.',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Gagal menyimpan profil toko:', error);
+      setToast({
+        message: 'Gagal menyimpan profil toko. Silakan coba lagi.',
+        type: 'error',
+      });
+    }
   };
 
   return (
     <div className="w-full flex-1">
-      {/* Toast Notification Banner */}
-      <SaveToast show={showToast} />
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          duration={3000}
+          onClose={() => setToast(null)}
+          position="bottom-right"
+        />
+      )}
 
       {/* Workspace Container */}
       <div className="w-full mx-auto px-4 md:px-6 py-6">
@@ -92,7 +97,7 @@ export const StorePage: React.FC = () => {
           {/* Left Column: Form Settings (7 cols) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <StoreForm
-              data={storeData}
+              data={formData}
               onChange={handleChange}
               onReset={handleReset}
               onSave={handleSave}
@@ -101,7 +106,7 @@ export const StorePage: React.FC = () => {
           </div>
 
           {/* Right Column: Live Struk Thermal Preview (5 cols sticky) */}
-          <ThermalReceiptPreview data={storeData} />
+          <ThermalReceiptPreview data={formData} />
         </div>
       </div>
     </div>

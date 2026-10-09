@@ -1,6 +1,6 @@
 import React from 'react';
 import { Barcode, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import type { ProductItem } from '../../../types/products';
+import type { ProductTableProps } from '../../../types/products';
 import { formatRupiah } from '../../../lib/formatters';
 import { Button } from '../../../components/ui/Button';
 import {
@@ -11,20 +11,7 @@ import {
   SelectItem,
 } from '../../../components/ui/Select';
 
-interface ProductTableProps {
-  products: ProductItem[];
-  totalFilteredCount: number;
-  currentPage: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange?: (limit: number) => void;
-  selectedIds: string[];
-  onToggleSelectAll: (checked: boolean) => void;
-  onToggleSelectOne: (id: string) => void;
-  onEdit: (product: ProductItem) => void;
-  onDelete: (product: ProductItem) => void;
-  isLoading?: boolean;
-}
+export type { ProductTableProps };
 
 export const ProductTable: React.FC<ProductTableProps> = ({
   products,

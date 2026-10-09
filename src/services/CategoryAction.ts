@@ -1,5 +1,10 @@
 import api, { type ApiResponse } from '../lib/api';
-import type { BackendCategoryItem, CategoryItem } from '../types/products';
+import type {
+  BackendCategoryItem,
+  CategoryItem,
+  CreateCategoryPayload,
+  UpdateCategoryPayload,
+} from '../types/products';
 
 /**
  * Helper untuk menentukan emoji dan gaya warna badge berdasarkan nama kategori
@@ -82,13 +87,7 @@ export const mapBackendCategoryToCategoryItem = (
   };
 };
 
-export interface CreateCategoryPayload {
-  name: string;
-}
-
-export interface UpdateCategoryPayload {
-  name: string;
-}
+export type { CreateCategoryPayload, UpdateCategoryPayload };
 
 /**
  * Mengambil seluruh data kategori dari backend route `GET /categories`

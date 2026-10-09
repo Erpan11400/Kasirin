@@ -1,12 +1,8 @@
 import React from 'react';
 import { QrCode, CheckCircle2, AlertTriangle, Ban } from 'lucide-react';
+import type { StatsCardsProps } from '../../../types/products';
 
-interface StatsCardsProps {
-  totalSku: number;
-  inStockCount: number;
-  lowStockCount: number;
-  outOfStockCount: number;
-}
+export type { StatsCardsProps };
 
 export const StatsCards: React.FC<StatsCardsProps> = ({
   totalSku,

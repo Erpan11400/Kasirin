@@ -16,10 +16,11 @@ import {
   ChevronRight,
   AlertTriangle,
 } from 'lucide-react';
-import type { RoleItem } from '../../../types/users';
+import type { RoleItem, RoleSettingsTabProps } from '../../../types/users';
 import { Button } from '../../../components/ui/Button';
 import { TextField } from '../../../components/ui/TextField';
 import {
+  TableContainer,
   Table,
   TableHeader,
   TableBody,
@@ -45,16 +46,7 @@ import {
   DialogFooter,
 } from '../../../components/ui/Dialog';
 
-interface RoleSettingsTabProps {
-  roles: RoleItem[];
-  selectedRoleId?: string;
-  onSelectRole?: (roleId: string) => void;
-  onOpenAddRoleModal: () => void;
-  onOpenEditRoleModal: (role: RoleItem) => void;
-  onUpdateRolePermissions?: (roleId: string, permissions: RoleItem['permissions']) => void;
-  onDeleteRole: (roleId: string) => void;
-  showToast?: (msg: string) => void;
-}
+export type { RoleSettingsTabProps };
 
 export const RoleSettingsTab: React.FC<RoleSettingsTabProps> = ({
   roles,
@@ -177,9 +169,8 @@ export const RoleSettingsTab: React.FC<RoleSettingsTabProps> = ({
       </div>
 
       {/* Roles Table Card Wrapper */}
-      <div className="relative w-full rounded-xl bg-surface-card shadow-xs border border-border-subtle">
-        <div className="w-full overflow-x-auto scrollbar-thin">
-          <Table className="min-w-[940px]">
+      <TableContainer>
+        <Table className="min-w-[940px]">
             <TableHeader>
               <TableRow hoverable={false}>
                 <TableHead className="min-w-[220px]">Nama Peran (Role)</TableHead>
@@ -354,7 +345,6 @@ export const RoleSettingsTab: React.FC<RoleSettingsTabProps> = ({
               )}
             </TableBody>
           </Table>
-        </div>
 
         {/* Table Footer Pagination */}
         <div className="w-full px-4 py-3 bg-surface-bg flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border-subtle rounded-b-xl">
@@ -431,7 +421,7 @@ export const RoleSettingsTab: React.FC<RoleSettingsTabProps> = ({
             </Button>
           </div>
         </div>
-      </div>
+      </TableContainer>
 
       {/* Helpful Tip Banner */}
       <div className="p-4 rounded-xl bg-surface-container-low flex items-start gap-3 border border-border-subtle/70">

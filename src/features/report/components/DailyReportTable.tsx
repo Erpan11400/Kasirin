@@ -10,12 +10,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import type { DailyRecord } from '../../../types/report';
+import type { DailyReportTableProps } from '../../../types/report';
 import { formatRupiah } from '../../../lib/formatters';
 
-interface DailyReportTableProps {
-  records: DailyRecord[];
-}
+export type { DailyReportTableProps };
 
 export const DailyReportTable: React.FC<DailyReportTableProps> = ({ records }) => {
   return (

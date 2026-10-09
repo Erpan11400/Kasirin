@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { Slot } from 'radix-ui';
 import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -64,8 +64,9 @@ export type ButtonSize =
   | 'icon-lg';
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   asChild?: boolean;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;

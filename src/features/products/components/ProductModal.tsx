@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, RotateCw, ImagePlus } from 'lucide-react';
-import type { ProductItem, CategoryItem, ProductFormData } from '../../../types/products';
+
 import {
   Dialog,
   DialogContent,
@@ -19,14 +19,9 @@ import {
   SelectItem,
 } from '../../../components/ui/Select';
 
-interface ProductModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: ProductFormData) => Promise<void> | void;
-  editingProduct?: ProductItem | null;
-  categories: CategoryItem[];
-  isSubmitting?: boolean;
-}
+import type { ProductModalProps } from '../../../types/products';
+
+export type { ProductModalProps };
 
 export const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,

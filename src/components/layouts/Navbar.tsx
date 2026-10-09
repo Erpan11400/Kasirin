@@ -3,13 +3,29 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
 import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useStore } from '../../context/StoreContext';
+import { formatDateTimeShort } from '../../lib/formatters';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, hasPermission } = useAuth();
+  const { store } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Timer untuk tanggal dan jam berjalan realtime
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format tanggal dan jam berjalan menggunakan formatDateTimeShort (contoh: 7 Okt 2026, 22:48)
+  const currentFormattedTime = formatDateTimeShort(currentTime);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -120,12 +136,16 @@ export const Navbar: React.FC = () => {
           <div className="hidden md:flex flex-col items-end">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-secondary"></span>
-              <span className="text-sm font-semibold text-on-surface">Toko Sembako Jaya</span>
+              <span className="text-sm font-semibold text-on-surface truncate max-w-[220px]">
+                {store.storeName || 'KasirIn Store'}
+              </span>
               <span className="text-[11px] font-bold bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">
                 Online
               </span>
             </div>
-            <div className="text-xs text-text-muted">Senin, 24 Okt • 09:41 WIB</div>
+            <div className="text-xs text-text-muted">
+              {currentFormattedTime}
+            </div>
           </div>
 
           {/* Profile Dropdown */}

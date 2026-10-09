@@ -17,7 +17,7 @@ import {
   Mail,
   AlertTriangle,
 } from 'lucide-react';
-import type { UserItem, RoleItem } from '../../../types/users';
+import type { UserItem, UserListTabProps } from '../../../types/users';
 import {
   TableContainer,
   Table,
@@ -47,13 +47,7 @@ import {
   DialogFooter,
 } from '../../../components/ui/Dialog';
 
-interface UserListTabProps {
-  users: UserItem[];
-  roles: RoleItem[];
-  onOpenAddModal: () => void;
-  onOpenEditModal: (user: UserItem) => void;
-  onToggleUserStatus: (user: UserItem) => void;
-}
+export type { UserListTabProps };
 
 export const UserListTab: React.FC<UserListTabProps> = ({
   users,

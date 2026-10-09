@@ -1,14 +1,10 @@
 import React from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
-import type { CartItem } from '../../../types/pos';
+import type { CartItemRowProps } from '../../../types/pos';
 import { formatRupiah } from '../../../lib/formatters';
 import { Button } from '../../../components/ui/Button';
 
-interface CartItemRowProps {
-  item: CartItem;
-  onUpdateQty: (id: string, delta: number) => void;
-  onRemove: (id: string) => void;
-}
+export type { CartItemRowProps };
 
 export const CartItemRow: React.FC<CartItemRowProps> = ({
   item,

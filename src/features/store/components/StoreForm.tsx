@@ -11,15 +11,9 @@ import {
   Save,
   Loader2,
 } from 'lucide-react';
-import type { StoreProfileData } from '../../../types/store';
+import type { StoreFormProps } from '../../../types/store';
 
-interface StoreFormProps {
-  data: StoreProfileData;
-  onChange: <K extends keyof StoreProfileData>(field: K, value: StoreProfileData[K]) => void;
-  onReset: () => void;
-  onSave: () => void;
-  isSaving: boolean;
-}
+export type { StoreFormProps };
 
 export const StoreForm: React.FC<StoreFormProps> = ({
   data,

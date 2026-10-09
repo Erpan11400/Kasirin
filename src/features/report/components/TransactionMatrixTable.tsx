@@ -12,13 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import type { TransactionRecord } from '../../../types/report';
+import type { TransactionMatrixTableProps } from '../../../types/report';
 import { formatRupiah } from '../../../lib/formatters';
 
-interface TransactionMatrixTableProps {
-  transactions: TransactionRecord[];
-  onViewReceipt: (record: TransactionRecord) => void;
-}
+export type { TransactionMatrixTableProps };
 
 export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
   transactions,

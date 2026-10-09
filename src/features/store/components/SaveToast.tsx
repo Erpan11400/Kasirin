@@ -1,9 +1,8 @@
 import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
+import type { SaveToastProps } from '../../../types/store';
 
-interface SaveToastProps {
-  show: boolean;
-}
+export type { SaveToastProps };
 
 export const SaveToast: React.FC<SaveToastProps> = ({ show }) => {
   return (

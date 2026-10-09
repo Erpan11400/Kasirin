@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tag } from 'lucide-react';
-import type { CategoryItem } from '../../../types/products';
+import type { CategoryModalProps } from '../../../types/products';
 import { getCategoryEmojiAndStyle } from '../../../services/CategoryAction';
 import {
   Dialog,
@@ -13,13 +13,7 @@ import {
 } from '../../../components/ui/Dialog';
 import { Button } from '../../../components/ui/Button';
 
-interface CategoryModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (name: string, emoji: string) => Promise<void> | void;
-  editingCategory?: CategoryItem | null;
-  isSubmitting?: boolean;
-}
+export type { CategoryModalProps };
 
 export const CategoryModal: React.FC<CategoryModalProps> = ({
   isOpen,

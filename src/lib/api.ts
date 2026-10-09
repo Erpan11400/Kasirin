@@ -5,15 +5,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 
-/**
- * Format standar response dari backend KasirIn
- */
-export interface ApiResponse<T = any> {
-  statusCode: number;
-  status: 'success' | 'failed';
-  message: string;
-  data: T;
-}
+import type { ApiResponse } from '../types/api';
+export type { ApiResponse };
 
 /**
  * Mengambil Backend URL langsung dari file .env (VITE_BACKEND_URL)

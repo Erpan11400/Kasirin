@@ -1,12 +1,7 @@
 import api, { type ApiResponse } from '../lib/api';
 import { saveAuthSession, clearAuthSession, getRefreshToken } from '../lib/authStorage';
-import type { LoginApiResponse, LoginResponseData } from '../types/auth';
-
-export interface LoginPayload {
-  email?: string;
-  username?: string;
-  password?: string;
-}
+import type { LoginApiResponse, LoginResponseData, LoginPayload } from '../types/auth';
+export type { LoginPayload };
 
 /**
  * Service untuk memproses login ke backend API

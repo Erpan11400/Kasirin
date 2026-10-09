@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Pencil, PlusCircle, Trash2, Loader2, Tag, Search, ArrowUpDown, X } from 'lucide-react';
-import type { CategoryItem } from '../../../types/products';
+import type { CategoryGridProps, SortOption } from '../../../types/products';
 import { Button } from '../../../components/ui/Button';
 import {
   Select,
@@ -10,16 +10,7 @@ import {
   SelectItem,
 } from '../../../components/ui/Select';
 
-interface CategoryGridProps {
-  categories: CategoryItem[];
-  productCounts: Record<string, number>;
-  onOpenAddCategory: () => void;
-  onEditCategory: (category: CategoryItem) => void;
-  onDeleteCategory?: (category: CategoryItem) => void;
-  isLoading?: boolean;
-}
-
-type SortOption = 'name-asc' | 'name-desc' | 'count-desc' | 'count-asc';
+export type { CategoryGridProps, SortOption };
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({
   categories,

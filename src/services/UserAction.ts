@@ -1,22 +1,14 @@
 import api, { type ApiResponse } from '../lib/api';
-import type { BackendUserItem, UserItem, RoleItem } from '../types/users';
+import type {
+  BackendUserItem,
+  UserItem,
+  RoleItem,
+  CreateUserPayload,
+  UpdateUserPayload,
+} from '../types/users';
 import { formatLastLogin, formatDate } from '../lib/formatters';
 
-export interface CreateUserPayload {
-  name: string;
-  email: string;
-  roleId: string;
-  password?: string;
-  isActive?: boolean;
-}
-
-export interface UpdateUserPayload {
-  name?: string;
-  email?: string;
-  roleId?: string;
-  password?: string;
-  isActive?: boolean;
-}
+export type { CreateUserPayload, UpdateUserPayload };
 
 /**
  * Helper untuk memetakan BackendUserItem ke format UserItem Frontend

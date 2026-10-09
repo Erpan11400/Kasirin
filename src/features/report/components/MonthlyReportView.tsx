@@ -8,12 +8,10 @@ import {
   ChevronRight,
   TrendingUp,
 } from 'lucide-react';
-import type { MonthlyRecord } from '../../../types/report';
+import type { MonthlyReportViewProps } from '../../../types/report';
 import { formatRupiah } from '../../../lib/formatters';
 
-interface MonthlyReportViewProps {
-  records: MonthlyRecord[];
-}
+export type { MonthlyReportViewProps };
 
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ records }) => {
   const chartData = [

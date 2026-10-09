@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { UserInfo, LoginResponseData } from '../types/auth';
+import type { UserInfo, LoginResponseData, LoginPayload } from '../types/auth';
 import {
   getAccessToken,
   getRefreshToken,
@@ -11,7 +11,7 @@ import {
   isTokenExpired,
 } from '../lib/authStorage';
 import { refreshAccessToken } from '../lib/api';
-import { login as loginService, logout as logoutService, type LoginPayload } from '../services/LoginAction';
+import { login as loginService, logout as logoutService } from '../services/LoginAction';
 
 export interface AuthContextType {
   isAuthenticated: boolean;

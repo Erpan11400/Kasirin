@@ -9,7 +9,12 @@ import {
   Save,
   KeyRound,
 } from 'lucide-react';
-import type { RoleItem, RolePermissions, PermissionActions } from '../../../types/users';
+import type {
+  RolePermissions,
+  PermissionActions,
+  RoleModalProps,
+  ModuleConfig,
+} from '../../../types/users';
 import { DEFAULT_ROLE_PERMISSIONS } from '../../../services/RoleAction';
 import {
   Dialog,
@@ -21,31 +26,9 @@ import {
   DialogFooter,
 } from '../../../components/ui/Dialog';
 import { Button } from '../../../components/ui/Button';
+import { TextField } from '../../../components/ui/TextField';
 
-export interface RoleModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  role?: RoleItem | null;
-  onSave: (data: {
-    name: string;
-    description?: string;
-    permissions: RolePermissions;
-    id?: string;
-  }) => void;
-}
-
-interface ModuleConfig {
-  key: keyof RolePermissions;
-  title: string;
-  icon: string;
-  description: string;
-  labels: {
-    view: { title: string; desc: string };
-    create: { title: string; desc: string };
-    update: { title: string; desc: string };
-    delete: { title: string; desc: string };
-  };
-}
+export type { RoleModalProps, ModuleConfig };
 
 const MODULE_CONFIGS: ModuleConfig[] = [
   {
@@ -311,31 +294,26 @@ export const RoleModal: React.FC<RoleModalProps> = ({
                 <span>📝</span> Informasi Dasar Role
               </h4>
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-on-surface">
-                    Nama Role (Peran) <span className="text-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={roleName}
-                    onChange={(e) => setRoleName(e.target.value)}
-                    placeholder="Contoh: Staf Kasir, Supervisor Gudang"
-                    className="w-full px-3.5 py-2.5 bg-surface-container-lowest rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle transition-all placeholder:text-text-muted"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                <TextField
+                  label="Nama Role (Peran)"
+                  required
+                  value={roleName}
+                  onChange={(e) => setRoleName(e.target.value)}
+                  placeholder="Contoh: Staf Kasir, Supervisor Gudang"
+                />
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-on-surface">
-                    Deskripsi Peran <span className="text-text-muted font-normal text-[11px]">(Opsional)</span>
-                  </label>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <div className="flex justify-between items-center text-xs font-semibold text-[#131b2e]">
+                    <label className="cursor-pointer">Deskripsi Peran</label>
+                    <span className="text-[#64748B] font-normal text-[11px]">(Opsional)</span>
+                  </div>
                   <textarea
-                    rows={2}
+                    rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Contoh: Bertanggung jawab melayani transaksi kasir POS dan melihat daftar katalog produk"
-                    className="w-full px-3.5 py-2.5 bg-surface-container-lowest rounded-lg text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary border border-border-subtle transition-all placeholder:text-text-muted resize-none"
+                    placeholder="Contoh: Bertanggung jawab melayani transaksi kasir POS"
+                    className="w-full bg-slate-50 border border-slate-200 text-[#131b2e] placeholder-[#64748B] rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all duration-200 focus:bg-white focus:border-[#006948] focus:ring-2 focus:ring-[#006948]/20 resize-none"
                   />
                 </div>
               </div>
@@ -356,24 +334,21 @@ export const RoleModal: React.FC<RoleModalProps> = ({
 
                 {/* Master Global Select All / Deselect All */}
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant={isAllSelected ? 'primary' : 'outline'}
+                    size="sm"
                     onClick={() => handleToggleGlobalAll(!isAllSelected)}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      isAllSelected
-                        ? 'bg-primary text-on-primary shadow-sm hover:bg-primary-container'
-                        : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-border-subtle'
-                    }`}
+                    leftIcon={
+                      isAllSelected ? (
+                        <CheckSquare className="w-3.5 h-3.5" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5 text-text-muted" />
+                      )
+                    }
                   >
-                    {isAllSelected ? (
-                      <CheckSquare className="w-3.5 h-3.5" />
-                    ) : (
-                      <Square className="w-3.5 h-3.5 text-text-muted" />
-                    )}
-                    <span>
-                      {isAllSelected ? 'Batal Pilih Semua' : 'Pilih Semua Hak Akses'}
-                    </span>
-                  </button>
+                    {isAllSelected ? 'Batal Pilih Semua' : 'Pilih Semua Hak Akses'}
+                  </Button>
                 </div>
               </div>
 
@@ -412,20 +387,21 @@ export const RoleModal: React.FC<RoleModalProps> = ({
 
                         {/* Per-feature Select All button */}
                         <div className="flex items-center gap-2">
-                          <button
+                          <Button
                             type="button"
+                            variant={isAllActive ? 'secondary' : 'outline'}
+                            size="xs"
                             onClick={() => handleToggleModuleAll(modKey)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container-lowest hover:bg-surface-container border border-border-subtle text-on-surface transition-colors cursor-pointer"
+                            leftIcon={
+                              isAllActive ? (
+                                <CheckSquare className="w-3.5 h-3.5 text-primary" />
+                              ) : (
+                                <Square className="w-3.5 h-3.5 text-text-muted" />
+                              )
+                            }
                           >
-                            {isAllActive ? (
-                              <CheckSquare className="w-3.5 h-3.5 text-primary" />
-                            ) : (
-                              <Square className="w-3.5 h-3.5 text-text-muted" />
-                            )}
-                            <span>
-                              {isAllActive ? 'Batal Semua' : 'Pilih Semua Akses'}
-                            </span>
-                          </button>
+                            {isAllActive ? 'Batal Semua' : 'Pilih Semua Akses'}
+                          </Button>
                           <span
                             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                               activeCount === 4

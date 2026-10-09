@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Edit3, KeyRound, User, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import type { UserItem, RoleItem } from '../../../types/users';
+
 import {
   Dialog,
   DialogContent,
@@ -21,20 +21,9 @@ import {
   SelectItem,
 } from '../../../components/ui/Select';
 
-export interface UserModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  user?: UserItem | null;
-  roles: RoleItem[];
-  onSave: (data: {
-    id?: string;
-    name: string;
-    email: string;
-    roleId: string;
-    password?: string;
-    isActive?: boolean;
-  }) => void;
-}
+import type { UserModalProps } from '../../../types/users';
+
+export type { UserModalProps };
 
 export const UserModal: React.FC<UserModalProps> = ({
   isOpen,
