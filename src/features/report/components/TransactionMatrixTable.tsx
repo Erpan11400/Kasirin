@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Table,
+  Table as TableIcon,
   Coffee,
-  ShoppingBag,
-  Droplets,
   Package,
+  Soup,
   Eye,
   Banknote,
   QrCode,
@@ -14,127 +13,167 @@ import {
 } from 'lucide-react';
 import type { TransactionMatrixTableProps } from '../../../types/report';
 import { formatRupiah } from '../../../lib/formatters';
+import {
+  TableContainer,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableFooter,
+  TableEmpty,
+} from '../../../components/ui/Table';
+import { Button } from '../../../components/ui/Button';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/Select';
 
 export type { TransactionMatrixTableProps };
+
+const getProductIcon = (productName: string) => {
+  const lower = productName.toLowerCase();
+  if (
+    lower.includes('mie') ||
+    lower.includes('bakso') ||
+    lower.includes('pangsit') ||
+    lower.includes('soup') ||
+    lower.includes('wonton')
+  ) {
+    return <Soup className="w-4 h-4 shrink-0 text-primary" />;
+  }
+  if (
+    lower.includes('teh') ||
+    lower.includes('kopi') ||
+    lower.includes('minum') ||
+    lower.includes('jus')
+  ) {
+    return <Coffee className="w-4 h-4 shrink-0 text-primary" />;
+  }
+  return <Package className="w-4 h-4 shrink-0 text-primary" />;
+};
 
 export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
   transactions,
   onViewReceipt,
+  products = [],
 }) => {
-  // Compute subtotal summaries for the displayed transactions
-  const totalCoffeeQty = transactions.reduce((acc, t) => acc + t.coffeeQty, 0);
-  const totalSugarQty = transactions.reduce((acc, t) => acc + t.sugarQty, 0);
-  const totalOilQty = transactions.reduce((acc, t) => acc + t.oilQty, 0);
-  const totalRiceQty = transactions.reduce((acc, t) => acc + t.riceQty, 0);
-  const grandTotal = transactions.reduce((acc, t) => acc + t.total, 0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Default 10 data per halaman
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(transactions.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const displayedTransactions = transactions.slice(startIndex, startIndex + itemsPerPage);
+
+  const startEntry = transactions.length > 0 ? startIndex + 1 : 0;
+  const endEntry = Math.min(startIndex + itemsPerPage, transactions.length);
+
+  // Compute grand total summary for the displayed transactions
+  const grandTotal = displayedTransactions.reduce((acc, t) => acc + t.total, 0);
+
+  const minTableWidth = Math.max(1100, 500 + products.length * 150);
 
   return (
-    <div className="bg-surface-card rounded-xl shadow-xs border border-border-subtle/60 overflow-hidden">
+    <TableContainer className="shadow-xs border border-border-subtle/60">
       {/* Table Topbar Context Info */}
       <div className="px-5 py-3.5 bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border-subtle/60">
         <div className="flex items-center gap-2">
-          <Table className="w-4 h-4 text-primary" />
+          <TableIcon className="w-4 h-4 text-primary" />
           <span className="text-sm font-bold text-on-surface">
             Matriks Distribusi Qty &amp; Total per Transaksi
           </span>
         </div>
         <span className="text-xs text-text-muted">
-          Menampilkan {transactions.length} dari 142 baris data terverifikasi (10 per halaman)
+          Menampilkan <strong className="text-on-surface font-semibold">{startEntry} - {endEntry}</strong> dari{' '}
+          <strong className="text-on-surface font-semibold">{transactions.length}</strong> transaksi terverifikasi
         </span>
       </div>
 
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-left whitespace-nowrap min-w-[1100px] text-sm">
-          <thead>
-            <tr className="bg-surface-bg text-text-muted text-xs uppercase tracking-wider border-b border-border-subtle/60">
-              <th className="py-3 px-4 font-semibold">No. Invoice</th>
-              <th className="py-3 px-4 font-semibold">Tanggal &amp; Waktu</th>
-              {/* Product 1 */}
-              <th className="py-3 px-4 font-semibold bg-surface-container-low/60 text-primary">
-                <div className="flex items-center gap-1.5">
-                  <Coffee className="w-4 h-4" />
-                  <span>Kopi Hitam 200g</span>
-                </div>
-              </th>
-              {/* Product 2 */}
-              <th className="py-3 px-4 font-semibold bg-surface-container-low/60 text-primary">
-                <div className="flex items-center gap-1.5">
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Gula Pasir 1kg</span>
-                </div>
-              </th>
-              {/* Product 3 */}
-              <th className="py-3 px-4 font-semibold bg-surface-container-low/60 text-primary">
-                <div className="flex items-center gap-1.5">
-                  <Droplets className="w-4 h-4" />
-                  <span>Minyak Goreng 2L</span>
-                </div>
-              </th>
-              {/* Product 4 */}
-              <th className="py-3 px-4 font-semibold bg-surface-container-low/60 text-primary">
-                <div className="flex items-center gap-1.5">
-                  <Package className="w-4 h-4" />
-                  <span>Beras 5kg</span>
-                </div>
-              </th>
-              <th className="py-3 px-4 font-semibold">Pembayaran</th>
-              <th className="py-3 px-4 font-semibold text-right">Total Bayar</th>
-              <th className="py-3 px-4 font-semibold text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border-subtle/40 text-on-surface">
-            {transactions.map((t, idx) => (
-              <tr
-                key={t.id}
-                className={`hover:bg-surface-bg/80 transition-colors ${idx % 2 === 1 ? 'bg-surface-container-low/20' : ''
-                  }`}
+      <Table style={{ minWidth: `${minTableWidth}px` }} className="text-sm">
+        <TableHeader>
+          <TableRow className="bg-surface-bg border-b border-border-subtle/60">
+            <TableHead className="font-semibold">No. Invoice</TableHead>
+            <TableHead className="font-semibold">Tanggal &amp; Waktu</TableHead>
+            {/* Dynamic Product Columns */}
+            {products.map((p) => (
+              <TableHead
+                key={p._id}
+                className="font-semibold bg-surface-container-low/60 text-primary whitespace-nowrap min-w-[140px]"
               >
-                <td className="py-3 px-4 text-sm font-bold text-primary font-mono">
-                  {t.invoiceId}
-                </td>
-                <td className="py-3 px-4 text-text-muted text-xs">
-                  {t.dateTime.split(' ')[0]}{' '}
-                  <span className="text-on-surface font-semibold">
-                    {t.dateTime.split(' ')[1]}
+                <div className="flex items-center gap-1.5">
+                  {getProductIcon(p.name)}
+                  <span className="truncate" title={p.name}>
+                    {p.name}
                   </span>
-                </td>
-                <td className="py-3 px-4 bg-surface-container-low/30 text-xs">
-                  {t.coffeeQty > 0 ? (
-                    <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
-                      {t.coffeeQty} x Rp 15.000
-                    </span>
+                </div>
+              </TableHead>
+            ))}
+            <TableHead className="font-semibold">Pembayaran</TableHead>
+            <TableHead alignContent="right" className="font-semibold">Total Bayar</TableHead>
+            <TableHead alignContent="center" className="font-semibold">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {displayedTransactions.length > 0 ? (
+            displayedTransactions.map((t, idx) => (
+              <TableRow
+                key={t.id}
+                className={idx % 2 === 1 ? 'bg-surface-container-low/20' : ''}
+              >
+                <TableCell className="text-sm font-bold text-primary font-mono">
+                  {t.invoiceId}
+                </TableCell>
+                <TableCell className="text-xs text-text-muted whitespace-nowrap">
+                  {t.dateTime ? (
+                    t.dateTime.includes(' ') ? (
+                      <>
+                        <span>{t.dateTime.substring(0, t.dateTime.lastIndexOf(' '))} </span>
+                        <span className="text-on-surface font-semibold">
+                          {t.dateTime.substring(t.dateTime.lastIndexOf(' ') + 1)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-on-surface font-semibold">{t.dateTime}</span>
+                    )
                   ) : (
-                    <span className="text-text-muted">-</span>
+                    '-'
                   )}
-                </td>
-                <td className="py-3 px-4 bg-surface-container-low/30 text-xs">
-                  {t.sugarQty > 0 ? (
-                    <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
-                      {t.sugarQty} x Rp 16.000
-                    </span>
-                  ) : (
-                    <span className="text-text-muted">-</span>
-                  )}
-                </td>
-                <td className="py-3 px-4 bg-surface-container-low/30 text-xs">
-                  {t.oilQty > 0 ? (
-                    <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
-                      {t.oilQty} x Rp 28.000
-                    </span>
-                  ) : (
-                    <span className="text-text-muted">-</span>
-                  )}
-                </td>
-                <td className="py-3 px-4 bg-surface-container-low/30 text-xs">
-                  {t.riceQty > 0 ? (
-                    <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
-                      {t.riceQty} x Rp 75.000
-                    </span>
-                  ) : (
-                    <span className="text-text-muted">-</span>
-                  )}
-                </td>
-                <td className="py-3 px-4">
+                </TableCell>
+                {/* Dynamic Product Columns */}
+                {products.map((product) => {
+                  const matchedItems = (t.items || []).filter((item) => {
+                    if (item.productId && item.productId === product._id) return true;
+                    if (
+                      item.name &&
+                      item.name.trim().toLowerCase() === product.name.trim().toLowerCase()
+                    )
+                      return true;
+                    return false;
+                  });
+                  const totalQty = matchedItems.reduce((acc, curr) => acc + curr.qty, 0);
+                  const unitPrice = matchedItems[0]?.price || 0;
+
+                  return (
+                    <TableCell
+                      key={product._id}
+                      className="bg-surface-container-low/30 text-xs whitespace-nowrap"
+                    >
+                      {totalQty > 0 ? (
+                        <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
+                          {totalQty} {unitPrice > 0 ? `x ${formatRupiah(unitPrice)}` : 'pcs'}
+                        </span>
+                      ) : (
+                        <span className="text-text-muted">-</span>
+                      )}
+                    </TableCell>
+                  );
+                })}
+                <TableCell>
                   {t.paymentMethod === 'Tunai' ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-secondary-container text-on-secondary-container font-semibold">
                       <Banknote className="w-3.5 h-3.5" /> Tunai
@@ -148,116 +187,175 @@ export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
                       <Building2 className="w-3.5 h-3.5" /> Transfer
                     </span>
                   )}
-                </td>
-                <td className="py-3 px-4 text-right text-base font-bold text-on-surface">
+                </TableCell>
+                <TableCell alignContent="right" className="text-base font-bold text-on-surface">
                   {formatRupiah(t.total)}
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <button
+                </TableCell>
+                <TableCell alignContent="center">
+                  <Button
                     onClick={() => onViewReceipt(t)}
                     type="button"
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-bg hover:bg-surface-container-high text-primary text-xs font-semibold transition-colors cursor-pointer border border-border-subtle/40"
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Eye className="w-3.5 h-3.5" />}
+                    className="text-primary hover:text-primary-container"
                   >
-                    <Eye className="w-4 h-4" />
-                    <span>Lihat Struk</span>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          {/* Matriks Subtotal Bar */}
-          <tfoot>
-            <tr className="bg-surface-container-low text-xs text-on-surface border-t-2 border-border-subtle/60">
-              <td
-                className="py-3 px-4 font-bold text-right uppercase text-text-muted"
+                    Lihat Struk
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableEmpty
+              colSpan={products.length + 5}
+              title="Tidak ada data transaksi"
+              description="Tidak ditemukan transaksi yang sesuai dengan filter periode atau kriteria pencarian."
+            />
+          )}
+        </TableBody>
+        {/* Matriks Subtotal Bar */}
+        {displayedTransactions.length > 0 && (
+          <TableFooter>
+            <TableRow className="bg-surface-container-low text-xs text-on-surface border-t-2 border-border-subtle/60">
+              <TableCell
+                className="font-bold text-right uppercase text-text-muted"
                 colSpan={2}
               >
-                Subtotal Sample Terpilih:
-              </td>
-              <td className="py-3 px-4 font-bold text-primary">
-                {totalCoffeeQty} Pcs ({formatRupiah(totalCoffeeQty * 15000)})
-              </td>
-              <td className="py-3 px-4 font-bold text-primary">
-                {totalSugarQty} Pcs ({formatRupiah(totalSugarQty * 16000)})
-              </td>
-              <td className="py-3 px-4 font-bold text-primary">
-                {totalOilQty} Pcs ({formatRupiah(totalOilQty * 28000)})
-              </td>
-              <td className="py-3 px-4 font-bold text-primary">
-                {totalRiceQty} Pcs ({formatRupiah(totalRiceQty * 75000)})
-              </td>
-              <td className="py-3 px-4 text-text-muted font-normal text-[11px]">
-                {transactions.length} Trx Valid
-              </td>
-              <td className="py-3 px-4 text-right font-bold text-base text-primary">
+                Subtotal Halaman Terpilih:
+              </TableCell>
+              {products.map((product) => {
+                let colQty = 0;
+                let colSubtotal = 0;
+                displayedTransactions.forEach((t) => {
+                  const matched = (t.items || []).filter(
+                    (i) =>
+                      (i.productId && i.productId === product._id) ||
+                      (i.name && i.name.trim().toLowerCase() === product.name.trim().toLowerCase())
+                  );
+                  matched.forEach((i) => {
+                    colQty += i.qty;
+                    colSubtotal += i.qty * (i.price || 0);
+                  });
+                });
+
+                return (
+                  <TableCell
+                    key={product._id}
+                    className="font-bold text-primary whitespace-nowrap"
+                  >
+                    {colQty} Pcs {colSubtotal > 0 ? `(${formatRupiah(colSubtotal)})` : ''}
+                  </TableCell>
+                );
+              })}
+              <TableCell className="text-text-muted font-normal text-[11px]">
+                {displayedTransactions.length} Trx
+              </TableCell>
+              <TableCell alignContent="right" className="font-bold text-base text-primary">
                 {formatRupiah(grandTotal)}
-              </td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+              </TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          </TableFooter>
+        )}
+      </Table>
 
       {/* Pagination & Footer Summary */}
-      <div className="p-4 bg-surface-card border-t border-border-subtle/60 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3 text-text-muted text-xs">
-          <span className="font-medium text-on-surface">
-            Menampilkan <strong className="text-primary">1 - {transactions.length}</strong> dari{' '}
-            <strong>142</strong> data transaksi
+      <div className="w-full px-4 py-3 bg-surface-bg flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border-subtle rounded-b-xl">
+        <div className="flex items-center gap-3 text-xs text-text-muted">
+          <span>
+            Menampilkan <strong className="text-on-surface font-semibold">{startEntry} - {endEntry}</strong> dari{' '}
+            <strong className="text-on-surface font-semibold">{transactions.length}</strong> transaksi
           </span>
-          <div className="flex items-center gap-1.5 pl-0 sm:pl-3 border-l-0 sm:border-l border-border-subtle">
-            <span className="text-text-muted">Baris:</span>
-            <select className="bg-surface-bg text-on-surface font-semibold rounded-lg px-2.5 py-1 text-xs border border-border-subtle outline-none">
-              <option>10 per halaman</option>
-              <option>25 per halaman</option>
-              <option>50 per halaman</option>
-            </select>
+
+          {/* Per Page Selector */}
+          <div className="flex items-center gap-1.5 ml-2 border-l border-border-subtle pl-3">
+            <span className="text-[11px] text-text-muted shrink-0">Baris:</span>
+            <div className="w-24 relative">
+              <Select
+                value={String(itemsPerPage)}
+                onValueChange={(val) => {
+                  setItemsPerPage(Number(val));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger size="sm" className="h-7 text-xs bg-white border-border-subtle rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top" align="start" className="min-w-[5rem] z-50">
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
+        {/* Pagination Page Controls */}
         <div className="flex items-center gap-1.5">
-          <button
-            disabled
+          <Button
             type="button"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-bg text-text-muted font-medium text-xs hover:bg-surface-container-high transition-colors disabled:opacity-40 cursor-pointer"
+            variant="outline"
+            size="icon-sm"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            className="h-8 w-8 rounded-lg"
+            aria-label="Halaman sebelumnya"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Sebelumnya</span>
-          </button>
-          <button
+          </Button>
+
+          {Array.from({ length: totalPages }).map((_, idx) => {
+            const pageNum = idx + 1;
+            const isActive = currentPage === pageNum;
+
+            // Simple pagination windowing if many pages
+            if (
+              totalPages > 7 &&
+              Math.abs(pageNum - currentPage) > 2 &&
+              pageNum !== 1 &&
+              pageNum !== totalPages
+            ) {
+              if (pageNum === 2 || pageNum === totalPages - 1) {
+                return (
+                  <span key={pageNum} className="px-1 text-xs text-text-muted">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            }
+
+            return (
+              <Button
+                key={pageNum}
+                type="button"
+                variant={isActive ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setCurrentPage(pageNum)}
+                className={`h-8 min-w-[2rem] px-2 text-xs font-semibold rounded-lg ${
+                  isActive ? 'shadow-xs' : 'text-on-surface hover:bg-slate-100'
+                }`}
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+
+          <Button
             type="button"
-            className="w-8 h-8 rounded-lg bg-primary text-on-primary font-bold text-xs flex items-center justify-center shadow-xs"
+            variant="outline"
+            size="icon-sm"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            className="h-8 w-8 rounded-lg"
+            aria-label="Halaman berikutnya"
           >
-            1
-          </button>
-          <button
-            type="button"
-            className="w-8 h-8 rounded-lg bg-surface-bg text-on-surface font-medium text-xs hover:bg-surface-container-high flex items-center justify-center transition-colors cursor-pointer"
-          >
-            2
-          </button>
-          <button
-            type="button"
-            className="w-8 h-8 rounded-lg bg-surface-bg text-on-surface font-medium text-xs hover:bg-surface-container-high flex items-center justify-center transition-colors cursor-pointer"
-          >
-            3
-          </button>
-          <span className="px-1 text-text-muted text-xs">...</span>
-          <button
-            type="button"
-            className="w-8 h-8 rounded-lg bg-surface-bg text-on-surface font-medium text-xs hover:bg-surface-container-high flex items-center justify-center transition-colors cursor-pointer"
-          >
-            15
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-bg text-on-surface font-medium text-xs hover:bg-surface-container-high transition-colors cursor-pointer"
-          >
-            <span>Berikutnya</span>
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </TableContainer>
   );
 };

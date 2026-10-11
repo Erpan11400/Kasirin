@@ -33,7 +33,47 @@ export interface BackendTransactionResponse {
   paidAmount: number;
   changeAmount: number;
   cashierId: BackendTransactionCashier | string;
-  createdAt: string;
-  updatedAt: string;
+  dayDate: string;
   __v?: number;
 }
+
+export interface TransactionKpiRevenue {
+  total: number;
+  lastMonth: number;
+  difference: number;
+  growthPercentage: number;
+}
+
+export interface TransactionKpiTransactions {
+  total: number;
+  lastMonth: number;
+  difference: number;
+  growthPercentage: number;
+  period: string;
+}
+
+export interface TransactionKpiTopProduct {
+  id: string;
+  name: string;
+  soldCount: number;
+  totalItemsSold: number;
+}
+
+export interface TransactionKpiAov {
+  currentAverage: number;
+  difference: number;
+}
+
+export interface TransactionKpiData {
+  revenue: TransactionKpiRevenue;
+  transactions: TransactionKpiTransactions;
+  topProduct: TransactionKpiTopProduct | null;
+  aov: TransactionKpiAov;
+}
+
+export interface GetTransactionsFilter {
+  startDate?: string | Date;
+  endDate?: string | Date;
+}
+
+export type GetTransactionsParams = GetTransactionsFilter;

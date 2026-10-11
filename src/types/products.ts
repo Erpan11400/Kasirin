@@ -1,3 +1,8 @@
+export interface ProductNameItem {
+  _id: string;
+  name: string;
+}
+
 export interface BackendProductCategory {
   _id: string;
   name: string;

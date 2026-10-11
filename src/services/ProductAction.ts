@@ -5,10 +5,11 @@ import type {
   CategoryItem,
   CreateProductPayload,
   UpdateProductPayload,
+  ProductNameItem,
 } from '../types/products';
 import { formatDateTimeShort } from '../lib/formatters';
 
-export type { CreateProductPayload, UpdateProductPayload };
+export type { CreateProductPayload, UpdateProductPayload, ProductNameItem };
 
 export const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60';
@@ -189,3 +190,25 @@ export const deleteProduct = async (id: string): Promise<ApiResponse<any>> => {
     );
   }
 };
+
+/**
+ * Mengambil ringkasan nama produk dari backend route `GET /products/names`
+ */
+export const getProductNames = async (): Promise<ProductNameItem[]> => {
+  try {
+    const response = await api.get<ProductNameItem[]>('/products/names');
+    if (response && response.data && Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return [];
+  } catch (error: any) {
+    console.error('Error saat memuat daftar nama produk dari backend:', error);
+    throw new Error(
+      error?.response?.data?.message || error?.message || 'Gagal memuat nama produk.'
+    );
+  }
+};
+
