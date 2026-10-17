@@ -27,7 +27,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   change,
   paymentMethod,
   onPrint,
-  invoiceNumber = 'INV-20261007-001',
+  invoiceNumber = '-',
 }) => {
   const { store } = useStore();
   const { user } = useAuth();

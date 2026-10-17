@@ -1,6 +1,15 @@
 import api from '../lib/api';
 import type { BackendStoreItem, StoreProfileData, UpdateStorePayload } from '../types/store';
-import { DEFAULT_STORE_DATA } from '../features/store/data/initialStoreData';
+
+export const EMPTY_STORE_DATA: StoreProfileData = {
+  storeName: '',
+  category: '',
+  phone: '',
+  address: '',
+  footerNote: '',
+  showQris: false,
+  logoUrl: '',
+};
 
 /**
  * Helper untuk memetakan BackendStoreItem ke format StoreProfileData Frontend
@@ -8,25 +17,17 @@ import { DEFAULT_STORE_DATA } from '../features/store/data/initialStoreData';
 export const mapBackendStoreToStoreProfileData = (
   backendStore?: BackendStoreItem | null
 ): StoreProfileData => {
-  if (!backendStore) return DEFAULT_STORE_DATA;
+  if (!backendStore) return EMPTY_STORE_DATA;
 
   return {
     id: backendStore._id,
-    storeName: backendStore.name || DEFAULT_STORE_DATA.storeName,
-    category:
-      backendStore.businessCategory ?? backendStore.category ?? DEFAULT_STORE_DATA.category,
-    phone: backendStore.phone ?? DEFAULT_STORE_DATA.phone,
-    address: backendStore.address ?? DEFAULT_STORE_DATA.address,
-    footerNote: backendStore.footerNote ?? DEFAULT_STORE_DATA.footerNote,
-    showQris:
-      typeof backendStore.showQris === 'boolean'
-        ? backendStore.showQris
-        : DEFAULT_STORE_DATA.showQris,
-    logoUrl:
-      backendStore.imageUrl ||
-      backendStore.logoUrl ||
-      backendStore.logo ||
-      DEFAULT_STORE_DATA.logoUrl,
+    storeName: backendStore.name || '',
+    category: backendStore.businessCategory ?? backendStore.category ?? '',
+    phone: backendStore.phone ?? '',
+    address: backendStore.address ?? '',
+    footerNote: backendStore.footerNote ?? '',
+    showQris: typeof backendStore.showQris === 'boolean' ? backendStore.showQris : false,
+    logoUrl: backendStore.imageUrl || backendStore.logoUrl || backendStore.logo || '',
   };
 };
 
@@ -43,9 +44,9 @@ export const getStoreProfile = async (): Promise<StoreProfileData> => {
         return mapBackendStoreToStoreProfileData(storeItem);
       }
     }
-    return DEFAULT_STORE_DATA;
+    return EMPTY_STORE_DATA;
   } catch (error: any) {
-    console.warn('Gagal memuat profil toko dari backend, menggunakan data default/cache:', error);
+    console.error('Gagal memuat profil toko dari backend:', error);
     throw error;
   }
 };

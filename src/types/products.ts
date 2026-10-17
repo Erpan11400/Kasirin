@@ -108,8 +108,8 @@ export interface ToastMessage {
 export interface CategoryGridProps {
   categories: CategoryItem[];
   productCounts: Record<string, number>;
-  onOpenAddCategory: () => void;
-  onEditCategory: (category: CategoryItem) => void;
+  onOpenAddCategory?: () => void;
+  onEditCategory?: (category: CategoryItem) => void;
   onDeleteCategory?: (category: CategoryItem) => void;
   isLoading?: boolean;
 }
@@ -141,8 +141,8 @@ export interface ProductTableProps {
   selectedIds: string[];
   onToggleSelectAll: (checked: boolean) => void;
   onToggleSelectOne: (id: string) => void;
-  onEdit: (product: ProductItem) => void;
-  onDelete: (product: ProductItem) => void;
+  onEdit?: (product: ProductItem) => void;
+  onDelete?: (product: ProductItem) => void;
   isLoading?: boolean;
 }
 

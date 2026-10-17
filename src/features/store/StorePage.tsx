@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import type { StoreProfileData } from '../../types/store';
-import { DEFAULT_STORE_DATA } from './data/initialStoreData';
 import { StoreForm } from './components/StoreForm';
 import { ThermalReceiptPreview } from './components/ThermalReceiptPreview';
 import { Toast, type ToastType } from '../../components/ui/Toast';
 import { useStore } from '../../context/StoreContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const StorePage: React.FC = () => {
   const { store, updateStore, isSaving } = useStore();
+  const { hasPermission } = useAuth();
+  const canUpdateStore = hasPermission('store:update');
   const [formData, setFormData] = useState<StoreProfileData>(store);
   const [toast, setToast] = useState<{
     message: string;
@@ -31,7 +33,7 @@ export const StorePage: React.FC = () => {
   };
 
   const handleReset = () => {
-    setFormData(DEFAULT_STORE_DATA);
+    setFormData(store);
   };
 
   const handleSave = async () => {
@@ -66,11 +68,11 @@ export const StorePage: React.FC = () => {
       {/* Workspace Container */}
       <div className="w-full mx-auto px-4 md:px-6 py-6">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm border border-border-subtle/70 mb-6">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-primary">
               <Settings className="w-7 h-7 text-primary" />
-              <h1 className="text-2xl font-bold text-on-surface tracking-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">
                 Pengaturan Profil Toko
               </h1>
             </div>
@@ -102,6 +104,7 @@ export const StorePage: React.FC = () => {
               onReset={handleReset}
               onSave={handleSave}
               isSaving={isSaving}
+              readOnly={!canUpdateStore}
             />
           </div>
 

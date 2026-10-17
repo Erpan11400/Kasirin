@@ -85,21 +85,6 @@ const getDailyProductSale = (record: DailyRecord, product: ProductNameItem) => {
     }
   }
 
-  // Fallback to legacy fields if present
-  const lower = product.name.toLowerCase();
-  if (lower.includes('kopi') && record.coffeeQty !== undefined) {
-    return { qty: record.coffeeQty, price: 15000 };
-  }
-  if (lower.includes('gula') && record.sugarQty !== undefined) {
-    return { qty: record.sugarQty, price: 16000 };
-  }
-  if (lower.includes('minyak') && record.oilQty !== undefined) {
-    return { qty: record.oilQty, price: 28000 };
-  }
-  if (lower.includes('beras') && record.riceQty !== undefined) {
-    return { qty: record.riceQty, price: 75000 };
-  }
-
   return { qty: 0, price: 0 };
 };
 

@@ -115,3 +115,28 @@ export interface DateRangeModalProps {
   endDate: string;
   onApply: (startDate: string, endDate: string) => void;
 }
+
+export interface ReportPrintOptions {
+  orientation?: 'portrait' | 'landscape';
+  showKpis?: boolean;
+  showSignatures?: boolean;
+  customNotes?: string;
+  documentNumber?: string;
+  cashierName?: string;
+  approverName?: string;
+}
+
+export interface ReportPrintModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  activeTab: ReportTab;
+  startDate: string;
+  endDate: string;
+  transactions: TransactionRecord[];
+  dailyRecords: DailyRecord[];
+  monthlyRecords: MonthlyRecord[];
+  products: ProductNameItem[];
+  selectedPayment: PaymentFilter;
+  searchQuery?: string;
+}
+

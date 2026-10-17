@@ -44,6 +44,7 @@ export interface StoreFormProps {
   onReset: () => void;
   onSave: () => void;
   isSaving: boolean;
+  readOnly?: boolean;
 }
 
 export interface SaveToastProps {

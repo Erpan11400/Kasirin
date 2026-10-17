@@ -6,7 +6,6 @@ import { RoleSettingsTab } from './components/RoleSettingsTab';
 import { UserModal } from './components/UserModal';
 import { RoleModal } from './components/RoleModal';
 import { Toast } from '../../components/ui/Toast';
-import { INITIAL_USERS, INITIAL_ROLES } from './data/initialUsers';
 import type { UserItem, RoleItem, RolePermissions } from '../../types/users';
 import { getRoles, createRole, updateRole, deleteRole } from '../../services/RoleAction';
 import { getUsers, createUser, updateUser } from '../../services/UserAction';
@@ -31,9 +30,9 @@ export const UsersPage: React.FC = () => {
       setActiveTab('users');
     }
   }, [canViewUsers, canViewRoles, activeTab]);
-  const [users, setUsers] = useState<UserItem[]>(INITIAL_USERS);
-  const [roles, setRoles] = useState<RoleItem[]>(INITIAL_ROLES);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(INITIAL_ROLES[1]?.id || INITIAL_ROLES[0]?.id || '');
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [roles, setRoles] = useState<RoleItem[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
 
   // Modal states
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -66,24 +65,24 @@ export const UsersPage: React.FC = () => {
     let isMounted = true;
     const loadData = async () => {
       try {
-        let loadedRoles = roles;
+        let loadedRoles: RoleItem[] = [];
         try {
           const backendRoles = await getRoles();
-          if (backendRoles && backendRoles.length > 0) {
+          if (backendRoles && Array.isArray(backendRoles)) {
             loadedRoles = backendRoles;
           }
         } catch (roleErr) {
-          console.warn('Backend roles unavailable, using fallback:', roleErr);
+          console.error('Gagal memuat roles dari backend:', roleErr);
         }
 
-        let loadedUsers = users;
+        let loadedUsers: UserItem[] = [];
         try {
           const backendUsers = await getUsers(loadedRoles);
-          if (backendUsers && backendUsers.length > 0) {
+          if (backendUsers && Array.isArray(backendUsers)) {
             loadedUsers = backendUsers;
           }
         } catch (userErr) {
-          console.warn('Backend users unavailable, using fallback:', userErr);
+          console.error('Gagal memuat users dari backend:', userErr);
         }
 
         if (isMounted) {
@@ -99,7 +98,7 @@ export const UsersPage: React.FC = () => {
           });
         }
       } catch (err) {
-        console.warn('Error loading initial data:', err);
+        console.error('Error loading users and roles data:', err);
       }
     };
 
@@ -384,7 +383,7 @@ export const UsersPage: React.FC = () => {
       <div className="w-full bg-surface-container-lowest rounded-xl p-4 sm:p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-border-subtle/70">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold text-on-surface tracking-tight flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight flex items-center gap-2">
               <UserCog className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
               <span>Manajemen Pengguna &amp; Hak Akses (RBAC)</span>
             </h1>

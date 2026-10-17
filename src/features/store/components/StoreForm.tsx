@@ -21,6 +21,7 @@ export const StoreForm: React.FC<StoreFormProps> = ({
   onReset,
   onSave,
   isSaving,
+  readOnly = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +48,7 @@ export const StoreForm: React.FC<StoreFormProps> = ({
       onSubmit={handleSubmit}
       className="bg-surface-card rounded-xl p-6 md:p-8 shadow-xs border border-border-subtle/60 flex flex-col gap-8"
     >
+      <fieldset disabled={readOnly} className="contents">
       {/* Bagian 1: Identitas Bisnis */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
@@ -242,8 +244,10 @@ export const StoreForm: React.FC<StoreFormProps> = ({
           </label>
         </div>
       </div>
+      </fieldset>
 
       {/* Action Buttons Bar */}
+      {!readOnly && (
       <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-3">
         <button
           type="button"
@@ -271,6 +275,7 @@ export const StoreForm: React.FC<StoreFormProps> = ({
           )}
         </button>
       </div>
+      )}
     </form>
   );
 };

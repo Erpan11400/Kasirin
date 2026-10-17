@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { StoreProfileData } from '../types/store';
-import { DEFAULT_STORE_DATA } from '../features/store/data/initialStoreData';
-import { getStoreProfile, updateStoreProfile } from '../services/StoreAction';
+import { getStoreProfile, updateStoreProfile, EMPTY_STORE_DATA } from '../services/StoreAction';
 import { useAuth } from './AuthContext';
 
 const STORE_STORAGE_KEY = 'kasirin_store_profile';
@@ -21,7 +20,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
 
-  // Inisialisasi awal langsung dari LocalStorage agar instan dan offline-friendly
+  // Inisialisasi state toko dengan objek kosong hingga di-fetch dari backend
   const [store, setStore] = useState<StoreProfileData>(() => {
     try {
       const saved = localStorage.getItem(STORE_STORAGE_KEY);
@@ -31,7 +30,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (e) {
       console.error('Error parsing store cache from localStorage:', e);
     }
-    return DEFAULT_STORE_DATA;
+    return EMPTY_STORE_DATA;
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);

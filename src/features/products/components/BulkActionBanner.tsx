@@ -2,8 +2,8 @@ import React from 'react';
 import { CheckSquare } from 'lucide-react';
 interface BulkActionBannerProps {
   selectedCount: number;
-  onBulkCategoryChange: () => void;
-  onBulkDelete: () => void;
+  onBulkCategoryChange?: () => void;
+  onBulkDelete?: () => void;
 }
 
 export const BulkActionBanner: React.FC<BulkActionBannerProps> = ({
@@ -22,20 +22,24 @@ export const BulkActionBanner: React.FC<BulkActionBannerProps> = ({
         </span>
       </div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={onBulkCategoryChange}
-          type="button"
-          className="px-3 py-1.5 rounded-lg bg-surface-card text-on-surface text-xs font-semibold hover:bg-surface-bright shadow-xs transition-colors cursor-pointer"
-        >
-          Ubah Kategori Massal
-        </button>
-        <button
-          onClick={onBulkDelete}
-          type="button"
-          className="px-3 py-1.5 rounded-lg bg-error-container text-error text-xs font-semibold hover:bg-status-danger hover:text-on-error transition-colors cursor-pointer"
-        >
-          Hapus Terpilih
-        </button>
+        {onBulkCategoryChange && (
+          <button
+            onClick={onBulkCategoryChange}
+            type="button"
+            className="px-3 py-1.5 rounded-lg bg-surface-card text-on-surface text-xs font-semibold hover:bg-surface-bright shadow-xs transition-colors cursor-pointer"
+          >
+            Ubah Kategori Massal
+          </button>
+        )}
+        {onBulkDelete && (
+          <button
+            onClick={onBulkDelete}
+            type="button"
+            className="px-3 py-1.5 rounded-lg bg-error-container text-error text-xs font-semibold hover:bg-status-danger hover:text-on-error transition-colors cursor-pointer"
+          >
+            Hapus Terpilih
+          </button>
+        )}
       </div>
     </div>
   );

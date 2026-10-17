@@ -27,6 +27,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onDelete,
   isLoading = false,
 }) => {
+  const canSelect = Boolean(onEdit || onDelete);
+  const hasActions = Boolean(onEdit || onDelete);
   const totalPages = Math.max(1, Math.ceil(totalFilteredCount / itemsPerPage));
   const isAllSelected =
     products.length > 0 && products.every((p) => selectedIds.includes(p.id));
@@ -40,21 +42,23 @@ export const ProductTable: React.FC<ProductTableProps> = ({
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="bg-surface-bg text-text-muted text-xs uppercase tracking-wider border-b border-border-subtle/60">
-              <th className="py-3 px-4 w-12 text-center">
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={(e) => onToggleSelectAll(e.target.checked)}
-                  className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                />
-              </th>
+              {canSelect && (
+                <th className="py-3 px-4 w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={(e) => onToggleSelectAll(e.target.checked)}
+                    className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
+                  />
+                </th>
+              )}
               <th className="py-3 px-3 w-16">Foto</th>
               <th className="py-3 px-4 min-w-[200px]">Nama Produk &amp; Kode</th>
               <th className="py-3 px-4 min-w-[140px]">Kategori</th>
               <th className="py-3 px-4 text-right min-w-[120px]">Harga Jual</th>
               <th className="py-3 px-4 text-center min-w-[140px]">Sisa Stok</th>
               <th className="py-3 px-4 min-w-[130px]">Terakhir Diperbarui</th>
-              <th className="py-3 px-4 text-right w-24">Aksi</th>
+              {hasActions && <th className="py-3 px-4 text-right w-24">Aksi</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle/40 text-on-surface">
@@ -87,14 +91,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       } ${isOutOfStock ? 'opacity-65' : ''}`}
                   >
                     {/* Checkbox */}
-                    <td className="py-3.5 px-4 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => onToggleSelectOne(product.id)}
-                        className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-                      />
-                    </td>
+                    {canSelect && (
+                      <td className="py-3.5 px-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => onToggleSelectOne(product.id)}
+                          className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
+                        />
+                      </td>
+                    )}
 
                     {/* Foto */}
                     <td className="py-3.5 px-3">
@@ -130,10 +136,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${product.category === 'Sembako'
-                            ? 'bg-primary-fixed text-on-primary-fixed-variant'
-                            : product.category === 'Bumbu & Dapur'
-                              ? 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
-                              : 'bg-surface-container-highest text-on-surface'
+                          ? 'bg-primary-fixed text-on-primary-fixed-variant'
+                          : product.category === 'Bumbu & Dapur'
+                            ? 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
+                            : 'bg-surface-container-highest text-on-surface'
                           }`}
                       >
                         {product.category}
@@ -171,26 +177,32 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     </td>
 
                     {/* Aksi */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => onEdit(product)}
-                          type="button"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container hover:bg-surface-container-highest text-on-surface transition-colors cursor-pointer"
-                          title="Edit Produk"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(product)}
-                          type="button"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-error-container/40 hover:bg-error-container text-error transition-colors cursor-pointer"
-                          title="Hapus Produk"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                    {hasActions && (
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {onEdit && (
+                            <button
+                              onClick={() => onEdit(product)}
+                              type="button"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container hover:bg-surface-container-highest text-on-surface transition-colors cursor-pointer"
+                              title="Edit Produk"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          {onDelete && (
+                            <button
+                              onClick={() => onDelete(product)}
+                              type="button"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center bg-error-container/40 hover:bg-error-container text-error transition-colors cursor-pointer"
+                              title="Hapus Produk"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })

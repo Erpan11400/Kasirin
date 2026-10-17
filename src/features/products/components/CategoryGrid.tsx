@@ -111,16 +111,18 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
 
 
         {/* Action Button */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <Button
-            onClick={onOpenAddCategory}
-            variant="primary"
-            className="w-full sm:w-auto gap-2"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Tambah Kategori</span>
-          </Button>
-        </div>
+        {onOpenAddCategory && (
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button
+              onClick={onOpenAddCategory}
+              variant="primary"
+              className="w-full sm:w-auto gap-2"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Tambah Kategori</span>
+            </Button>
+          </div>
+        )}
       </div>
 
 
@@ -141,14 +143,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
               Tambahkan kategori baru untuk mulai mengelompokkan produk Anda.
             </p>
           </div>
-          <Button
-            onClick={onOpenAddCategory}
-            variant="primary"
-            className="mt-2 gap-2"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Tambah Kategori</span>
-          </Button>
+          {onOpenAddCategory && (
+            <Button
+              onClick={onOpenAddCategory}
+              variant="primary"
+              className="mt-2 gap-2"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Tambah Kategori</span>
+            </Button>
+          )}
         </div>
       ) : filteredAndSortedCategories.length === 0 ? (
         <div className="bg-surface-card p-10 rounded-xl border border-border-subtle/60 flex flex-col items-center justify-center gap-2 text-center">
@@ -177,9 +181,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl ${
-                      cat.bgClass || 'bg-surface-container-high'
-                    } ${cat.textClass || 'text-on-surface'}`}
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl ${cat.bgClass || 'bg-surface-container-high'
+                      } ${cat.textClass || 'text-on-surface'}`}
                   >
                     {cat.emoji || '🏷️'}
                   </div>
@@ -193,14 +196,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => onEditCategory(cat)}
-                    type="button"
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
-                    title="Edit Kategori"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  {onEditCategory && (
+                    <button
+                      onClick={() => onEditCategory(cat)}
+                      type="button"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+                      title="Edit Kategori"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   {onDeleteCategory && (
                     <button
                       onClick={() => onDeleteCategory(cat)}

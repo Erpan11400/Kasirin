@@ -18,36 +18,47 @@ export default function App() {
     <AuthProvider>
       <StoreProvider>
         <BrowserRouter>
-        <Routes>
-          {/* Guest / Public Only Routes (Diarahkan ke '/' jika sudah login) */}
-          <Route element={<GuestRoute />}>
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
-
-          {/* Protected Routes (Wajib Login & Cek Sesi pada Setiap Akses) */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<PosPage />} />
-              <Route path="transaksi" element={<PosPage />} />
-              <Route path="produk" element={<ProductPage />} />
-              <Route path="laporan" element={<ReportPage />} />
-              <Route path="pengaturan-toko" element={<StorePage />} />
-
-              {/* Khusus Pengaturan Users & Hak Akses (Wajib Izin users:view atau roles:view) */}
-              <Route element={<ProtectedRoute requiredPermission={['users:view', 'roles:view']} />}>
-                <Route path="pengaturan-users" element={<UsersPage />} />
-              </Route>
-
-              <Route path="testing" element={<Testing />} />
-              {/* Not Found inside protected layout */}
-              <Route path="*" element={<NotFound />} />
+          <Routes>
+            {/* Guest / Public Only Routes (Diarahkan ke '/' jika sudah login) */}
+            <Route element={<GuestRoute />}>
+              <Route path="/login" element={<LoginPage />} />
             </Route>
-          </Route>
 
-          {/* Fallback 404 / Unknown route outside layout */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Protected Routes (Wajib Login & Cek Sesi pada Setiap Akses) */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<MainLayout />}>
+                {/* Transaksi (Kasir) - transactions:view */}
+                <Route element={<ProtectedRoute requiredPermission="transactions:view" />}>
+                  <Route index element={<PosPage />} />
+                  {/* <Route path="transaksi" element={<PosPage />} /> */}
+                  <Route path="laporan" element={<ReportPage />} />
+                </Route>
+
+                {/* Produk & Kategori - products:view atau categories:view */}
+                <Route element={<ProtectedRoute requiredPermission={['products:view', 'categories:view']} />}>
+                  <Route path="produk" element={<ProductPage />} />
+                </Route>
+
+                {/* Pengaturan Toko - store:view */}
+                <Route element={<ProtectedRoute requiredPermission="store:view" />}>
+                  <Route path="pengaturan-toko" element={<StorePage />} />
+                </Route>
+
+                {/* Khusus Pengaturan Users & Hak Akses (Wajib Izin users:view atau roles:view) */}
+                <Route element={<ProtectedRoute requiredPermission={['users:view', 'roles:view']} />}>
+                  <Route path="pengaturan-users" element={<UsersPage />} />
+                </Route>
+
+                <Route path="testing" element={<Testing />} />
+                {/* Not Found inside protected layout */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Route>
+
+            {/* Fallback 404 / Unknown route outside layout */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
       </StoreProvider>
     </AuthProvider>
   );

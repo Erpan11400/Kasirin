@@ -75,6 +75,28 @@ export function formatDateTime(dateInput?: string | Date | number | null): strin
 }
 
 /**
+ * Format tanggal dan waktu lengkap dengan nama bulan Indonesia (contoh: 16 Oktober 2026, 09:24 WIB)
+ */
+export function formatDateTimeFull(dateInput?: string | Date | number | null): string {
+  if (!dateInput) return '-';
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return '-';
+
+  const datePart = date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const timePart = date.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return `${datePart}, ${timePart} WIB`;
+}
+
+/**
  * Format tanggal dengan bulan pendek dan waktu (contoh: 6 Okt 2026, 09:24)
  */
 export function formatDateTimeShort(dateInput?: string | Date | number | null): string {

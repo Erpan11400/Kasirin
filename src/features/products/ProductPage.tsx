@@ -43,6 +43,7 @@ import {
 } from '../../components/ui/Dialog';
 import { Button } from '../../components/ui/Button';
 import { Toast, type ToastType } from '../../components/ui/Toast';
+import { useAuth } from '../../context/AuthContext';
 import {
   Select,
   SelectTrigger,
@@ -53,6 +54,17 @@ import {
 
 
 export const ProductPage: React.FC = () => {
+  // Authorization
+  const { hasPermission } = useAuth();
+  const canViewProducts = hasPermission('products:view');
+  const canCreateProduct = hasPermission('products:create');
+  const canUpdateProduct = hasPermission('products:update');
+  const canDeleteProduct = hasPermission('products:delete');
+  const canViewCategories = hasPermission('categories:view');
+  const canCreateCategory = hasPermission('categories:create');
+  const canUpdateCategory = hasPermission('categories:update');
+  const canDeleteCategory = hasPermission('categories:delete');
+
   // Main Data State
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -62,7 +74,9 @@ export const ProductPage: React.FC = () => {
   const [isSubmittingCategory, setIsSubmittingCategory] = useState<boolean>(false);
 
   // Tab & Filters State
-  const [activeTab, setActiveTab] = useState<MainTab>('produk');
+  const [activeTab, setActiveTab] = useState<MainTab>(
+    !canViewProducts && canViewCategories ? 'kategori' : 'produk'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('');
@@ -398,10 +412,10 @@ export const ProductPage: React.FC = () => {
     <div className="w-full flex-1">
       <div className="w-full px-4 lg:px-6 py-6 max-w-[1680px] mx-auto space-y-6">
         {/* Top Bar / Sub-Header & Navigation Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm border border-border-subtle/70">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-on-surface">
+              <span className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">
                 📦 Manajemen Produk &amp; Kategori
               </span>
             </div>
@@ -412,49 +426,49 @@ export const ProductPage: React.FC = () => {
 
           {/* Segmented Tab Switcher */}
           <div className="inline-flex p-1 rounded-xl bg-surface-container-high self-start lg:self-auto shadow-xs">
+            {canViewProducts && (
             <button
               onClick={() => setActiveTab('produk')}
               type="button"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
-                activeTab === 'produk'
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${activeTab === 'produk'
                   ? 'bg-surface-card text-primary font-bold shadow-xs'
                   : 'text-on-surface-variant hover:text-on-surface font-medium'
-              }`}
+                }`}
             >
               <Package className="w-4 h-4" />
               <span>Daftar Produk</span>
               <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
-                  activeTab === 'produk'
+                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'produk'
                     ? 'bg-primary-container text-on-primary-container'
                     : 'bg-surface-container-highest text-on-surface'
-                }`}
+                  }`}
               >
                 {products.length}
               </span>
             </button>
+            )}
 
+            {canViewCategories && (
             <button
               onClick={() => setActiveTab('kategori')}
               type="button"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
-                activeTab === 'kategori'
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${activeTab === 'kategori'
                   ? 'bg-surface-card text-primary font-bold shadow-xs'
                   : 'text-on-surface-variant hover:text-on-surface font-medium'
-              }`}
+                }`}
             >
               <Tags className="w-4 h-4" />
               <span>Daftar Kategori</span>
               <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
-                  activeTab === 'kategori'
+                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'kategori'
                     ? 'bg-primary-container text-on-primary-container'
                     : 'bg-surface-container-highest text-on-surface'
-                }`}
+                  }`}
               >
                 {categories.length}
               </span>
             </button>
+            )}
           </div>
         </div>
 
@@ -467,7 +481,7 @@ export const ProductPage: React.FC = () => {
         />
 
         {/* Section: Daftar Produk */}
-        {activeTab === 'produk' && (
+        {activeTab === 'produk' && canViewProducts && (
           <div className="space-y-4">
             {/* Action Toolbar */}
             <div className="bg-surface-card p-4 rounded-xl shadow-xs border border-border-subtle/60 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -551,6 +565,7 @@ export const ProductPage: React.FC = () => {
                   <BookmarkPlus className="w-4 h-4" />
                   <span>Kategori</span>
                 </button> */}
+                {canCreateProduct && (
                 <button
                   onClick={handleOpenCreateProduct}
                   type="button"
@@ -559,14 +574,15 @@ export const ProductPage: React.FC = () => {
                   <PlusCircle className="w-5 h-5" />
                   <span>Tambah Produk</span>
                 </button>
+                )}
               </div>
             </div>
 
             {/* Bulk Selection Banner */}
             <BulkActionBanner
               selectedCount={selectedIds.length}
-              onBulkCategoryChange={handleBulkCategoryChange}
-              onBulkDelete={handleBulkDelete}
+              onBulkCategoryChange={canUpdateProduct ? handleBulkCategoryChange : undefined}
+              onBulkDelete={canDeleteProduct ? handleBulkDelete : undefined}
             />
 
             {/* Data Table */}
@@ -583,21 +599,21 @@ export const ProductPage: React.FC = () => {
               selectedIds={selectedIds}
               onToggleSelectAll={handleToggleSelectAll}
               onToggleSelectOne={handleToggleSelectOne}
-              onEdit={handleOpenEditProduct}
-              onDelete={handleDeleteProduct}
+              onEdit={canUpdateProduct ? handleOpenEditProduct : undefined}
+              onDelete={canDeleteProduct ? handleDeleteProduct : undefined}
               isLoading={isProductsLoading}
             />
           </div>
         )}
 
         {/* Section: Daftar Kategori */}
-        {activeTab === 'kategori' && (
+        {activeTab === 'kategori' && canViewCategories && (
           <CategoryGrid
             categories={categories}
             productCounts={productCounts}
-            onOpenAddCategory={handleOpenAddCategory}
-            onEditCategory={handleEditCategory}
-            onDeleteCategory={handleDeleteCategory}
+            onOpenAddCategory={canCreateCategory ? handleOpenAddCategory : undefined}
+            onEditCategory={canUpdateCategory ? handleEditCategory : undefined}
+            onDeleteCategory={canDeleteCategory ? handleDeleteCategory : undefined}
             isLoading={isCategoriesLoading}
           />
         )}

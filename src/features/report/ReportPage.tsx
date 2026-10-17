@@ -8,12 +8,6 @@ import type {
   MonthlyRecord,
 } from '../../types/report';
 import type { ProductNameItem } from '../../types/products';
-import {
-  DEFAULT_PRODUCT_NAMES,
-  INITIAL_TRANSACTIONS,
-  INITIAL_DAILY_RECORDS,
-  INITIAL_MONTHLY_RECORDS,
-} from './data/initialReportData';
 import { getProductNames } from '../../services/ProductAction';
 import {
   getTransactions,
@@ -28,6 +22,7 @@ import { DailyReportTable } from './components/DailyReportTable';
 import { MonthlyReportView } from './components/MonthlyReportView';
 import { ReceiptDetailModal } from './components/ReceiptDetailModal';
 import { DateRangeModal } from './components/DateRangeModal';
+import { ReportPrintModal } from './components/ReportPrintModal';
 
 // Helper to get today's date formatted as DD/MM/YYYY
 const getTodayFormatted = (): string => {
@@ -49,15 +44,15 @@ export const ReportPage: React.FC = () => {
   const [endDate, setEndDate] = useState(getTodayFormatted);
 
   // Products State (diambil dari /products/names)
-  const [products, setProducts] = useState<ProductNameItem[]>(DEFAULT_PRODUCT_NAMES);
+  const [products, setProducts] = useState<ProductNameItem[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
 
   // Data States
-  const [transactions, setTransactions] = useState<TransactionRecord[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState<boolean>(false);
-  const [dailyRecords, setDailyRecords] = useState<DailyRecord[]>(INITIAL_DAILY_RECORDS);
+  const [dailyRecords, setDailyRecords] = useState<DailyRecord[]>([]);
   const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(false);
-  const [monthlyRecords, setMonthlyRecords] = useState<MonthlyRecord[]>(INITIAL_MONTHLY_RECORDS);
+  const [monthlyRecords, setMonthlyRecords] = useState<MonthlyRecord[]>([]);
   const [isLoadingMonthly, setIsLoadingMonthly] = useState<boolean>(false);
 
   // Fetch daftar produk dari endpoint GET /products/names
@@ -67,11 +62,11 @@ export const ReportPage: React.FC = () => {
       try {
         setIsLoadingProducts(true);
         const data = await getProductNames();
-        if (isMounted && Array.isArray(data) && data.length > 0) {
+        if (isMounted && Array.isArray(data)) {
           setProducts(data);
         }
       } catch (err) {
-        console.warn('Gagal memuat daftar nama produk dari backend, menggunakan data default:', err);
+        console.error('Gagal memuat daftar nama produk dari backend:', err);
       } finally {
         if (isMounted) {
           setIsLoadingProducts(false);
@@ -126,9 +121,11 @@ export const ReportPage: React.FC = () => {
             };
           });
           setTransactions(mapped);
+        } else if (isMounted) {
+          setTransactions([]);
         }
       } catch (err) {
-        console.warn('Gagal memuat riwayat transaksi backend, menggunakan data lokal:', err);
+        console.error('Gagal memuat riwayat transaksi backend:', err);
       } finally {
         if (isMounted) {
           setIsLoadingTransactions(false);
@@ -151,9 +148,11 @@ export const ReportPage: React.FC = () => {
         const data = await getDailyTransactions({ startDate, endDate });
         if (isMounted && Array.isArray(data)) {
           setDailyRecords(data);
+        } else if (isMounted) {
+          setDailyRecords([]);
         }
       } catch (err) {
-        console.warn('Gagal memuat rekap harian transaksi backend, menggunakan data lokal:', err);
+        console.error('Gagal memuat rekap harian transaksi backend:', err);
       } finally {
         if (isMounted) {
           setIsLoadingDaily(false);
@@ -176,9 +175,11 @@ export const ReportPage: React.FC = () => {
         const data = await getMonthlyTransactions();
         if (isMounted && Array.isArray(data)) {
           setMonthlyRecords(data);
+        } else if (isMounted) {
+          setMonthlyRecords([]);
         }
       } catch (err) {
-        console.warn('Gagal memuat rekap bulanan transaksi backend, menggunakan data lokal:', err);
+        console.error('Gagal memuat rekap bulanan transaksi backend:', err);
       } finally {
         if (isMounted) {
           setIsLoadingMonthly(false);
@@ -195,6 +196,7 @@ export const ReportPage: React.FC = () => {
   // Modal States
   const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionRecord | null>(null);
 
   // Filtered Transactions
@@ -350,7 +352,7 @@ export const ReportPage: React.FC = () => {
           endDate={endDate}
           onDateRangeClick={handleDateRangeClick}
           onExport={handleExportAction}
-          onPrint={() => window.print()}
+          onPrint={() => setIsPrintModalOpen(true)}
           activeTab={activeTab}
         />
 
@@ -395,6 +397,21 @@ export const ReportPage: React.FC = () => {
         startDate={startDate}
         endDate={endDate}
         onApply={handleApplyDateRange}
+      />
+
+      {/* Pratinjau & Cetak / Download PDF Modal */}
+      <ReportPrintModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        activeTab={activeTab}
+        startDate={startDate}
+        endDate={endDate}
+        transactions={filteredTransactions}
+        dailyRecords={filteredDailyRecords}
+        monthlyRecords={filteredMonthlyRecords}
+        products={products}
+        selectedPayment={selectedPayment}
+        searchQuery={searchQuery}
       />
     </div>
   );

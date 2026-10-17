@@ -111,9 +111,10 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
           variant="primary"
           size="sm"
           leftIcon={<Printer className="w-4 h-4" />}
-          className="h-10 shadow-xs"
+          className="h-10 shadow-xs font-semibold"
+          title="Cetak atau Unduh Dokumen Laporan sebagai PDF"
         >
-          Cetak Rekap
+          Cetak / Unduh PDF
         </Button>
       </div>
     </div>

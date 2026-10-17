@@ -28,6 +28,7 @@ import { ReceiptModal } from './components/ReceiptModal';
 import { BarcodeModal } from './components/BarcodeModal';
 import { formatRupiah } from '../../lib/formatters';
 import { Button } from '../../components/ui/Button';
+import { useAuth } from '../../context/AuthContext';
 import { TextField } from '../../components/ui/TextField';
 import { Toast } from '../../components/ui/Toast';
 import {
@@ -49,6 +50,7 @@ import {
 } from '../../components/ui/Select';
 
 export const PosPage: React.FC = () => {
+  const { user } = useAuth();
   // Catalog & Category State from Backend
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -369,20 +371,17 @@ export const PosPage: React.FC = () => {
       {/* POS Master Terminal Container */}
       <div className="w-full px-4 lg:px-6 py-4 max-w-[1680px] mx-auto">
         {/* Top Utility & Shift Banner */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-surface-card rounded-xl p-3.5 shadow-sm border border-border-subtle/60">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-surface-container-lowest rounded-xl p-4 sm:p-6 shadow-sm border border-border-subtle/70">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
               <Store className="w-6 h-6 text-primary" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-on-surface">Kasir POS Terminal #01</h1>
-                <span className="text-[11px] font-bold bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Shift Aktif
-                </span>
+                <h1 className="text-lg sm:text-xl font-bold text-on-surface tracking-tight">Kasir</h1>
               </div>
               <p className="text-xs text-text-muted">
-                Kasir Bertugas: <strong className="text-on-surface font-semibold">Kasir</strong> • Sesi: Pagi (07:00 - 15:30 WIB)
+                Kasir Bertugas: <strong className="text-on-surface font-semibold">{user?.name || 'Kasir'}</strong>
               </p>
             </div>
           </div>
@@ -693,24 +692,21 @@ export const PosPage: React.FC = () => {
 
                   {/* Kembalian Info Box */}
                   <div
-                    className={`p-3 rounded-lg flex items-center justify-between ${
-                      cashGiven >= totalBill
+                    className={`p-3 rounded-lg flex items-center justify-between ${cashGiven >= totalBill
                         ? 'bg-emerald-50 text-emerald-900'
                         : 'bg-red-50 text-status-danger'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <CircleDollarSign
-                        className={`w-5 h-5 ${
-                          cashGiven >= totalBill ? 'text-emerald-600' : 'text-status-danger'
-                        }`}
+                        className={`w-5 h-5 ${cashGiven >= totalBill ? 'text-emerald-600' : 'text-status-danger'
+                          }`}
                       />
                       <span className="text-sm font-semibold">Kembalian:</span>
                     </div>
                     <span
-                      className={`text-lg font-bold ${
-                        cashGiven >= totalBill ? 'text-emerald-700' : 'text-status-danger'
-                      }`}
+                      className={`text-lg font-bold ${cashGiven >= totalBill ? 'text-emerald-700' : 'text-status-danger'
+                        }`}
                     >
                       {cashGiven >= totalBill
                         ? formatRupiah(change)

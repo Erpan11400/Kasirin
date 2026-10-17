@@ -5,7 +5,6 @@ import {
   Soup,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
   Loader2,
 } from 'lucide-react';
 import type { MonthlyReportViewProps, MonthlyRecord } from '../../../types/report';
@@ -82,20 +81,6 @@ const getMonthlyProductSale = (record: MonthlyRecord, product: ProductNameItem) 
     }
   }
 
-  const lower = product.name.toLowerCase();
-  if (lower.includes('kopi') && record.coffeeQty !== undefined) {
-    return { qty: record.coffeeQty, price: 15000 };
-  }
-  if (lower.includes('gula') && record.sugarQty !== undefined) {
-    return { qty: record.sugarQty, price: 16000 };
-  }
-  if (lower.includes('minyak') && record.oilQty !== undefined) {
-    return { qty: record.oilQty, price: 28000 };
-  }
-  if (lower.includes('beras') && record.riceQty !== undefined) {
-    return { qty: record.riceQty, price: 75000 };
-  }
-
   return { qty: 0, price: 0 };
 };
 
@@ -144,49 +129,48 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-bold text-on-surface">
-              Rekap Laporan Bulanan Tahun 2026
+              Rekap Laporan Bulanan
             </h2>
             <p className="text-xs text-text-muted">
-              Komparasi performa volume penjualan per produk &amp; omset Toko Sembako Jaya
+              Komparasi performa volume penjualan per produk &amp; omset
             </p>
           </div>
-          <span className="text-xs font-bold bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full">
-            Kuartal Q3 Aktif
-          </span>
         </div>
 
         {/* Chart Visualizer */}
         <div className="p-4 bg-surface-container-low rounded-xl space-y-3 border border-border-subtle/40">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-on-surface">
-              Grafik Pertumbuhan Pendapatan (Mei - Sep 2026)
-            </span>
-            <span className="text-xs text-primary font-bold flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <span>Tren +24.8% Naik</span>
+              Grafik Pertumbuhan Pendapatan Bulanan
             </span>
           </div>
 
-          <div className="h-28 w-full flex items-end gap-3 sm:gap-6 pt-4 px-2">
-            {chartData.map((bar) => (
-              <div
-                key={bar.month}
-                className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group"
-              >
+          {chartData.length > 0 ? (
+            <div className="h-28 w-full flex items-end gap-3 sm:gap-6 pt-4 px-2">
+              {chartData.map((bar) => (
                 <div
-                  style={{ height: bar.height }}
-                  className={`w-full max-w-[48px] rounded-t-md transition-all duration-300 group-hover:scale-y-105 ${bar.opacity}`}
-                ></div>
-                <span
-                  className={`text-[11px] ${
-                    bar.isCurrent ? 'font-bold text-primary' : 'text-text-muted'
-                  }`}
+                  key={bar.month}
+                  className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group"
                 >
-                  {bar.month}
-                </span>
-              </div>
-            ))}
-          </div>
+                  <div
+                    style={{ height: bar.height }}
+                    className={`w-full max-w-[48px] rounded-t-md transition-all duration-300 group-hover:scale-y-105 ${bar.opacity}`}
+                  ></div>
+                  <span
+                    className={`text-[11px] ${
+                      bar.isCurrent ? 'font-bold text-primary' : 'text-text-muted'
+                    }`}
+                  >
+                    {bar.month}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-20 w-full flex items-center justify-center text-xs text-text-muted">
+              Belum ada data grafik omset bulanan yang tersedia.
+            </div>
+          )}
         </div>
       </div>
 

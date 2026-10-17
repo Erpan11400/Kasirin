@@ -18,11 +18,11 @@ export const mapBackendUserToUserItem = (
   roles: RoleItem[] = []
 ): UserItem => {
   const matchedRole = roles.find((r) => r.id === backendUser.roleId);
-  const roleName = matchedRole?.name || (backendUser.roleId ? 'Kasir' : 'Pengguna');
+  const roleName = matchedRole?.name || '-';
   const isPrimaryAdmin =
     roleName.toLowerCase() === 'admin' || roleName.toLowerCase() === 'administrator';
 
-  const regDate = backendUser.createdAt ? formatDate(backendUser.createdAt) : '01/09/2026';
+  const regDate = backendUser.createdAt ? formatDate(backendUser.createdAt) : '-';
 
   const username = backendUser.email
     ? `@${backendUser.email.split('@')[0]}`
