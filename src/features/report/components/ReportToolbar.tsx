@@ -1,5 +1,12 @@
 import React from 'react';
-import { Calendar, Search, SlidersHorizontal, Download, Printer } from 'lucide-react';
+import {
+  Calendar,
+  Search,
+  SlidersHorizontal,
+  Printer,
+  FileSpreadsheet,
+  Loader2,
+} from 'lucide-react';
 import type { PaymentFilter, ReportToolbarProps } from '../../../types/report';
 import { Button } from '../../../components/ui/Button';
 import { TextField } from '../../../components/ui/TextField';
@@ -17,10 +24,11 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
   onExport,
   onPrint,
   activeTab = 'transaksi',
+  isExportingExcel = false,
 }) => {
   const paymentOptions: PaymentFilter[] = ['Semua', 'Tunai', 'QRIS', 'Transfer'];
   const isMonthly = activeTab === 'bulanan';
-  const isDaily = activeTab === 'harian'
+  const isDaily = activeTab === 'harian';
 
   return (
     <div className="bg-surface-card p-4 rounded-xl shadow-xs border border-border-subtle/60 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -80,8 +88,8 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
                   size="xs"
                   onClick={() => onPaymentChange(opt)}
                   className={`text-xs h-7 px-2.5 rounded-md transition-all ${isSelected
-                      ? 'font-semibold shadow-xs'
-                      : 'text-text-muted hover:text-on-surface hover:bg-surface-card font-medium'
+                    ? 'font-semibold shadow-xs'
+                    : 'text-text-muted hover:text-on-surface hover:bg-surface-card font-medium'
                     }`}
                 >
                   {opt}
@@ -93,17 +101,25 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
 
       </div>
 
-      {/* Action Buttons (Export & Print) */}
+      {/* Action Buttons (Export Raw Data Excel & Print/PDF) */}
       <div className="flex items-center gap-2 self-end lg:self-auto shrink-0">
         <Button
           onClick={onExport}
           type="button"
           variant="outline"
           size="sm"
-          leftIcon={<Download className="w-4 h-4 text-secondary" />}
-          className="h-10 bg-surface-bg hover:bg-surface-container-high border-border-subtle/60"
+          disabled={isExportingExcel}
+          leftIcon={
+            isExportingExcel ? (
+              <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+            ) : (
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            )
+          }
+          className="h-10 bg-surface-bg hover:bg-surface-container-high border-border-subtle/60 text-xs font-semibold"
+          title="Export seluruh data mentah transaksi ke format spreadsheet Excel (.xlsx)"
         >
-          Export Excel / CSV
+          {isExportingExcel ? 'Mengekspor Excel...' : 'Export Data Mentah (Excel)'}
         </Button>
         <Button
           onClick={onPrint}

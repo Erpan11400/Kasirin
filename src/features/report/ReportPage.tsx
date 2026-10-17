@@ -6,6 +6,7 @@ import type {
   TransactionRecord,
   DailyRecord,
   MonthlyRecord,
+  ExportRawDataExcelParams,
 } from '../../types/report';
 import type { ProductNameItem } from '../../types/products';
 import { getProductNames } from '../../services/ProductAction';
@@ -14,6 +15,8 @@ import {
   getDailyTransactions,
   getMonthlyTransactions,
 } from '../../services/TransactionAction';
+import { exportRawDataExcel } from '../../services/exportService';
+import { Toast, type ToastType } from '../../components/ui/Toast';
 import { ReportHeader } from './components/ReportHeader';
 import { ReportKpis } from './components/ReportKpis';
 import { ReportToolbar } from './components/ReportToolbar';
@@ -193,11 +196,18 @@ export const ReportPage: React.FC = () => {
     };
   }, []);
 
-  // Modal States
+  // Modal & Export States
   const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionRecord | null>(null);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: ToastType;
+    title?: string;
+  } | null>(null);
 
   // Filtered Transactions
   const filteredTransactions = useMemo(() => {
@@ -261,10 +271,47 @@ export const ReportPage: React.FC = () => {
     setIsReceiptModalOpen(true);
   };
 
-  const handleExportAction = () => {
-    alert(
-      `Mengekspor data transaksi periode ${startDate} - ${endDate} ke format CSV/Excel...`
-    );
+  /**
+   * Handler ekspor data mentah transaksi ke format spreadsheet Excel (.xlsx)
+   * Menggunakan filter tanggal & metode bayar yang aktif di halaman
+   */
+  const handleExportExcel = async () => {
+    if (isExportingExcel) return;
+
+    try {
+      setIsExportingExcel(true);
+
+      const params: ExportRawDataExcelParams = {
+        paymentMethod: selectedPayment,
+      };
+
+      // Hanya sertakan startDate dan endDate jika bukan tab bulanan
+      if (activeTab !== 'bulanan') {
+        params.startDate = startDate;
+        params.endDate = endDate;
+      }
+
+      const result = await exportRawDataExcel(params);
+
+      setToast({
+        show: true,
+        type: 'success',
+        title: 'Ekspor Berhasil',
+        message: `File Excel "${result.filename}" berhasil digenerate dan diunduh.`,
+      });
+    } catch (err: any) {
+      console.error('Gagal mengekspor data Excel:', err);
+      setToast({
+        show: true,
+        type: 'error',
+        title: 'Gagal Ekspor Excel',
+        message:
+          err.message ||
+          'Terjadi kesalahan saat memproses ekspor data mentah ke Excel.',
+      });
+    } finally {
+      setIsExportingExcel(false);
+    }
   };
 
   const handleDateRangeClick = () => {
@@ -351,9 +398,10 @@ export const ReportPage: React.FC = () => {
           startDate={startDate}
           endDate={endDate}
           onDateRangeClick={handleDateRangeClick}
-          onExport={handleExportAction}
+          onExport={handleExportExcel}
           onPrint={() => setIsPrintModalOpen(true)}
           activeTab={activeTab}
+          isExportingExcel={isExportingExcel}
         />
 
         {/* 5. Tab Views */}
@@ -412,6 +460,17 @@ export const ReportPage: React.FC = () => {
         products={products}
         selectedPayment={selectedPayment}
         searchQuery={searchQuery}
+      />
+
+      {/* Toast Notifikasi Feedback Ekspor Data Mentah Excel */}
+      <Toast
+        show={toast?.show}
+        title={toast?.title}
+        message={toast?.message}
+        type={toast?.type}
+        duration={4500}
+        position="top-right"
+        onClose={() => setToast(null)}
       />
     </div>
   );

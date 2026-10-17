@@ -31,7 +31,7 @@ import { Button } from '../../../components/ui/Button';
 import { Toast, type ToastType } from '../../../components/ui/Toast';
 import { ReportPrintTemplate } from './ReportPrintTemplate';
 import { printReportDocument } from '../utils/printReport';
-import { downloadReportPdf } from '../../../services/reportService';
+import { downloadReportPdf } from '../../../services/exportService';
 
 export const ReportPrintModal: React.FC<ReportPrintModalProps> = ({
   isOpen,
@@ -114,6 +114,7 @@ export const ReportPrintModal: React.FC<ReportPrintModalProps> = ({
         paymentMethod: selectedPayment,
         orientation: orientation,
         showSignatures: showSignatures,
+        showKpis: showKpis,
         approverName: approverName.trim() || undefined,
         operatorName: user?.name || undefined,
         customNotes: customNotes.trim() || undefined,

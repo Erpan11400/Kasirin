@@ -99,6 +99,7 @@ export interface ReportToolbarProps {
   onExport: () => void;
   onPrint: () => void;
   activeTab?: ReportTab;
+  isExportingExcel?: boolean;
 }
 
 export interface TransactionMatrixTableProps {
@@ -156,7 +157,7 @@ export type ExportPdfOrientation = 'portrait' | 'landscape';
 export type ExportPdfPaymentMethod = 'all' | 'cash' | 'qris' | 'transfer' | PaymentFilter;
 
 /**
- * Payload parameter untuk request endpoint GET/POST /api/reports/export-pdf
+ * Payload parameter untuk request endpoint GET/POST /api/export/report/pdf
  */
 export interface ExportReportPdfParams {
   type?: ExportPdfReportType;
@@ -165,6 +166,7 @@ export interface ExportReportPdfParams {
   paymentMethod?: ExportPdfPaymentMethod;
   orientation?: ExportPdfOrientation;
   showSignatures?: boolean;
+  showKpis?: boolean;
   approverName?: string;
   operatorName?: string;
   cashierName?: string;
@@ -175,6 +177,24 @@ export interface ExportReportPdfParams {
  * Hasil dari pemanggilan download atau fetch file PDF laporan
  */
 export interface ExportPdfResult {
+  blob: Blob;
+  filename: string;
+}
+
+/**
+ * Parameter filter untuk request endpoint export data mentah Excel:
+ * GET/POST /api/export/raw-data/excel
+ */
+export interface ExportRawDataExcelParams {
+  startDate?: string;
+  endDate?: string;
+  paymentMethod?: 'all' | 'cash' | 'qris' | 'transfer' | PaymentFilter;
+}
+
+/**
+ * Hasil dari pemanggilan download atau fetch file Excel data mentah
+ */
+export interface ExportExcelResult {
   blob: Blob;
   filename: string;
 }
