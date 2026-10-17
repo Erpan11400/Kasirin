@@ -140,3 +140,42 @@ export interface ReportPrintModalProps {
   searchQuery?: string;
 }
 
+/**
+ * Parameter tipe laporan untuk export PDF ke backend
+ */
+export type ExportPdfReportType = 'transaksi' | 'harian' | 'bulanan';
+
+/**
+ * Orientasi halaman untuk export PDF Puppeteer
+ */
+export type ExportPdfOrientation = 'portrait' | 'landscape';
+
+/**
+ * Filter metode pembayaran untuk request export PDF
+ */
+export type ExportPdfPaymentMethod = 'all' | 'cash' | 'qris' | 'transfer' | PaymentFilter;
+
+/**
+ * Payload parameter untuk request endpoint GET/POST /api/reports/export-pdf
+ */
+export interface ExportReportPdfParams {
+  type?: ExportPdfReportType;
+  startDate?: string;
+  endDate?: string;
+  paymentMethod?: ExportPdfPaymentMethod;
+  orientation?: ExportPdfOrientation;
+  showSignatures?: boolean;
+  approverName?: string;
+  operatorName?: string;
+  cashierName?: string;
+  customNotes?: string;
+}
+
+/**
+ * Hasil dari pemanggilan download atau fetch file PDF laporan
+ */
+export interface ExportPdfResult {
+  blob: Blob;
+  filename: string;
+}
+
