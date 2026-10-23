@@ -100,19 +100,34 @@ export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
             <TableHead className="font-semibold">No. Invoice</TableHead>
             <TableHead className="font-semibold">Tanggal &amp; Waktu</TableHead>
             {/* Dynamic Product Columns */}
-            {products.map((p) => (
-              <TableHead
-                key={p._id}
-                className="font-semibold bg-surface-container-low/60 text-primary whitespace-nowrap min-w-[140px]"
-              >
-                <div className="flex items-center gap-1.5">
-                  {getProductIcon(p.name)}
-                  <span className="truncate" title={p.name}>
-                    {p.name}
-                  </span>
-                </div>
-              </TableHead>
-            ))}
+            {products.map((p) => {
+              const isInactive = p.isActive === false;
+              return (
+                <TableHead
+                  key={p._id}
+                  className={`font-semibold whitespace-nowrap min-w-[140px] ${
+                    isInactive
+                      ? 'bg-surface-container-high/70 text-text-muted border-l border-r border-dashed border-border-subtle/80'
+                      : 'bg-surface-container-low/60 text-primary'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {getProductIcon(p.name)}
+                    <span
+                      className={`truncate ${isInactive ? 'line-through opacity-85' : ''}`}
+                      title={p.name}
+                    >
+                      {p.name}
+                    </span>
+                    {isInactive && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 uppercase tracking-wider">
+                        Nonaktif
+                      </span>
+                    )}
+                  </div>
+                </TableHead>
+              );
+            })}
             <TableHead className="font-semibold">Pembayaran</TableHead>
             <TableHead alignContent="right" className="font-semibold">Total Bayar</TableHead>
             <TableHead alignContent="center" className="font-semibold">Aksi</TableHead>
@@ -157,14 +172,25 @@ export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
                   });
                   const totalQty = matchedItems.reduce((acc, curr) => acc + curr.qty, 0);
                   const unitPrice = matchedItems[0]?.price || 0;
+                  const isInactive = product.isActive === false;
 
                   return (
                     <TableCell
                       key={product._id}
-                      className="bg-surface-container-low/30 text-xs whitespace-nowrap"
+                      className={`text-xs whitespace-nowrap ${
+                        isInactive
+                          ? 'bg-surface-container-high/40 opacity-75 border-l border-r border-dashed border-border-subtle/40'
+                          : 'bg-surface-container-low/30'
+                      }`}
                     >
                       {totalQty > 0 ? (
-                        <span className="px-2 py-0.5 rounded bg-surface-container-high font-semibold text-on-surface">
+                        <span
+                          className={`px-2 py-0.5 rounded font-semibold ${
+                            isInactive
+                              ? 'bg-surface-container-highest text-text-muted'
+                              : 'bg-surface-container-high text-on-surface'
+                          }`}
+                        >
                           {totalQty} {unitPrice > 0 ? `x ${formatRupiah(unitPrice)}` : 'pcs'}
                         </span>
                       ) : (
@@ -238,10 +264,13 @@ export const TransactionMatrixTable: React.FC<TransactionMatrixTableProps> = ({
                   });
                 });
 
+                const isInactive = product.isActive === false;
                 return (
                   <TableCell
                     key={product._id}
-                    className="font-bold text-primary whitespace-nowrap"
+                    className={`font-bold whitespace-nowrap ${
+                      isInactive ? 'text-text-muted opacity-75' : 'text-primary'
+                    }`}
                   >
                     {colQty} Pcs {colSubtotal > 0 ? `(${formatRupiah(colSubtotal)})` : ''}
                   </TableCell>

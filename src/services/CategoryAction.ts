@@ -79,6 +79,7 @@ export const mapBackendCategoryToCategoryItem = (
   return {
     id: backendCategory._id,
     name: backendCategory.name,
+    isActive: backendCategory.isActive !== false,
     emoji: customEmoji || defaultStyle.emoji,
     bgClass: defaultStyle.bgClass,
     textClass: defaultStyle.textClass,
@@ -115,7 +116,7 @@ export const createCategory = async (
   customEmoji?: string
 ): Promise<CategoryItem> => {
   try {
-    const response = await api.post<any>('/categories', payload);
+    const response = await api.post<any>('/categories', { name: payload.name });
     const categoryData: BackendCategoryItem =
       response?.data?.category || response?.data || response;
     if (categoryData && (categoryData._id || categoryData.name || (categoryData as any).id)) {
@@ -124,6 +125,7 @@ export const createCategory = async (
     return {
       id: 'cat-' + Date.now(),
       name: payload.name,
+      isActive: true,
       emoji: customEmoji || '🏷️',
     };
   } catch (error: any) {
@@ -143,7 +145,11 @@ export const updateCategory = async (
   customEmoji?: string
 ): Promise<CategoryItem> => {
   try {
-    const response = await api.put<any>(`/categories/${id}`, payload);
+    const body: Record<string, any> = {};
+    if (payload.name !== undefined) body.name = payload.name;
+    if (payload.isActive !== undefined) body.isActive = payload.isActive;
+
+    const response = await api.put<any>(`/categories/${id}`, body);
     const categoryData: BackendCategoryItem =
       response?.data?.category || response?.data || response;
     if (categoryData && (categoryData._id || categoryData.name || (categoryData as any).id)) {
@@ -151,7 +157,8 @@ export const updateCategory = async (
     }
     return {
       id,
-      name: payload.name,
+      name: payload.name || '',
+      isActive: payload.isActive !== undefined ? payload.isActive : true,
       emoji: customEmoji || '🏷️',
     };
   } catch (error: any) {
@@ -162,6 +169,15 @@ export const updateCategory = async (
   }
 };
 
+/**
+ * Mengubah status aktif/nonaktif kategori ke backend
+ */
+export const toggleCategoryStatus = async (
+  id: string,
+  isActive: boolean
+): Promise<CategoryItem> => {
+  return updateCategory(id, { isActive });
+};
 
 /**
  * Menghapus kategori ke backend route `DELETE /categories/:id`

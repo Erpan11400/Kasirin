@@ -1,5 +1,5 @@
 import React from 'react';
-import { Barcode, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Barcode, Pencil, ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
 import type { ProductTableProps } from '../../../types/products';
 import { formatRupiah } from '../../../lib/formatters';
 import { Button } from '../../../components/ui/Button';
@@ -24,11 +24,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onToggleSelectAll,
   onToggleSelectOne,
   onEdit,
-  onDelete,
+  onToggleStatus,
+  isInactiveTable = false,
   isLoading = false,
 }) => {
-  const canSelect = Boolean(onEdit || onDelete);
-  const hasActions = Boolean(onEdit || onDelete);
+  const canSelect = Boolean(onEdit || onToggleStatus);
+  const hasActions = Boolean(onEdit || onToggleStatus);
   const totalPages = Math.max(1, Math.ceil(totalFilteredCount / itemsPerPage));
   const isAllSelected =
     products.length > 0 && products.every((p) => selectedIds.includes(p.id));
@@ -74,11 +75,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             ) : products.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-12 text-center text-text-muted">
-                  Tidak ada produk yang ditemukan.
+                  {isInactiveTable
+                    ? 'Tidak ada produk non-aktif.'
+                    : 'Tidak ada produk aktif yang ditemukan.'}
                 </td>
               </tr>
             ) : (
-
               products.map((product) => {
                 const isSelected = selectedIds.includes(product.id);
                 const isOutOfStock = product.stock === 0;
@@ -87,8 +89,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 return (
                   <tr
                     key={product.id}
-                    className={`transition-colors group hover:bg-surface-bg/80 ${isLowStock ? 'bg-tertiary-fixed/10' : ''
-                      } ${isOutOfStock ? 'opacity-65' : ''}`}
+                    className={`transition-colors group hover:bg-surface-bg/80 ${
+                      isInactiveTable
+                        ? 'opacity-75 bg-surface-bg/30'
+                        : isLowStock
+                        ? 'bg-tertiary-fixed/10'
+                        : ''
+                    } ${!isInactiveTable && isOutOfStock ? 'opacity-65' : ''}`}
                   >
                     {/* Checkbox */}
                     {canSelect && (
@@ -108,10 +115,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          className={`w-full h-full object-cover ${
+                            isInactiveTable ? 'grayscale contrast-75' : ''
+                          }`}
                           loading="lazy"
                         />
-                        {isOutOfStock && (
+                        {isOutOfStock && !isInactiveTable && (
                           <div className="absolute inset-0 bg-on-surface/50 flex items-center justify-center">
                             <span className="text-[9px] text-on-error bg-status-danger px-1 py-0.5 rounded font-bold uppercase tracking-wider">
                               HABIS
@@ -134,14 +143,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
                     {/* Kategori Badge */}
                     <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold ${product.category === 'Sembako'
-                          ? 'bg-primary-fixed text-on-primary-fixed-variant'
-                          : product.category === 'Bumbu & Dapur'
-                            ? 'bg-tertiary-fixed-dim text-on-tertiary-fixed'
-                            : 'bg-surface-container-highest text-on-surface'
-                          }`}
-                      >
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-surface-container-highest text-on-surface">
                         {product.category}
                       </span>
                     </td>
@@ -180,6 +182,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     {hasActions && (
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {isInactiveTable && onToggleStatus && (
+                            <button
+                              onClick={() => onToggleStatus(product, true)}
+                              type="button"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center bg-status-success/10 hover:bg-status-success/20 text-status-success transition-colors cursor-pointer"
+                              title="Aktifkan Kembali Produk"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                          )}
                           {onEdit && (
                             <button
                               onClick={() => onEdit(product)}
@@ -188,16 +200,6 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                               title="Edit Produk"
                             >
                               <Pencil className="w-4 h-4" />
-                            </button>
-                          )}
-                          {onDelete && (
-                            <button
-                              onClick={() => onDelete(product)}
-                              type="button"
-                              className="w-8 h-8 rounded-lg flex items-center justify-center bg-error-container/40 hover:bg-error-container text-error transition-colors cursor-pointer"
-                              title="Hapus Produk"
-                            >
-                              <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>

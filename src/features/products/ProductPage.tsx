@@ -4,12 +4,15 @@ import {
   Tags,
   Search,
   PlusCircle,
-  AlertTriangle,
+  Archive,
+  CheckCircle,
 } from 'lucide-react';
 import type {
   ProductItem,
   CategoryItem,
   MainTab,
+  ProductStatusTab,
+  CategoryStatusTab,
   StockFilter,
   ProductFormData,
 } from '../../types/products';
@@ -24,24 +27,14 @@ import {
   getCategories,
   createCategory,
   updateCategory,
-  deleteCategory,
+  toggleCategoryStatus,
 } from '../../services/CategoryAction';
 import {
   getProducts,
   createProduct,
   updateProduct,
-  deleteProduct,
+  toggleProductStatus,
 } from '../../services/ProductAction';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogBody,
-  DialogFooter,
-} from '../../components/ui/Dialog';
-import { Button } from '../../components/ui/Button';
 import { Toast, type ToastType } from '../../components/ui/Toast';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -52,18 +45,15 @@ import {
   SelectItem,
 } from '../../components/ui/Select';
 
-
 export const ProductPage: React.FC = () => {
   // Authorization
   const { hasPermission } = useAuth();
   const canViewProducts = hasPermission('products:view');
   const canCreateProduct = hasPermission('products:create');
   const canUpdateProduct = hasPermission('products:update');
-  const canDeleteProduct = hasPermission('products:delete');
   const canViewCategories = hasPermission('categories:view');
   const canCreateCategory = hasPermission('categories:create');
   const canUpdateCategory = hasPermission('categories:update');
-  const canDeleteCategory = hasPermission('categories:delete');
 
   // Main Data State
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -73,10 +63,14 @@ export const ProductPage: React.FC = () => {
   const [isSubmittingProduct, setIsSubmittingProduct] = useState<boolean>(false);
   const [isSubmittingCategory, setIsSubmittingCategory] = useState<boolean>(false);
 
-  // Tab & Filters State
+  // Tab & Sub-tab States
   const [activeTab, setActiveTab] = useState<MainTab>(
     !canViewProducts && canViewCategories ? 'kategori' : 'produk'
   );
+  const [productStatusTab, setProductStatusTab] = useState<ProductStatusTab>('active');
+  const [categoryStatusTab, setCategoryStatusTab] = useState<CategoryStatusTab>('active');
+
+  // Filters State
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [stockFilter, setStockFilter] = useState<StockFilter>('');
@@ -87,13 +81,9 @@ export const ProductPage: React.FC = () => {
   // Modal States
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
-  const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
-  const [isDeletingProduct, setIsDeletingProduct] = useState<boolean>(false);
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<CategoryItem | null>(null);
-  const [isDeletingCategory, setIsDeletingCategory] = useState<boolean>(false);
 
   // Toast Notification State
   const [toast, setToast] = useState<{
@@ -150,19 +140,38 @@ export const ProductPage: React.FC = () => {
     initData();
   }, []);
 
-  // Computed Stats
-  const totalSku = products.length;
-  const inStockCount = useMemo(
-    () => products.filter((p) => p.stock > 5).length,
+  // Split Active vs Inactive Items
+  const activeProducts = useMemo(
+    () => products.filter((p) => p.isActive !== false),
     [products]
+  );
+  const inactiveProducts = useMemo(
+    () => products.filter((p) => p.isActive === false),
+    [products]
+  );
+
+  const activeCategories = useMemo(
+    () => categories.filter((c) => c.isActive !== false),
+    [categories]
+  );
+  const inactiveCategories = useMemo(
+    () => categories.filter((c) => c.isActive === false),
+    [categories]
+  );
+
+  // Computed Stats (based on active products)
+  const totalSku = activeProducts.length;
+  const inStockCount = useMemo(
+    () => activeProducts.filter((p) => p.stock > 5).length,
+    [activeProducts]
   );
   const lowStockCount = useMemo(
-    () => products.filter((p) => p.stock > 0 && p.stock <= 5).length,
-    [products]
+    () => activeProducts.filter((p) => p.stock > 0 && p.stock <= 5).length,
+    [activeProducts]
   );
   const outOfStockCount = useMemo(
-    () => products.filter((p) => p.stock === 0).length,
-    [products]
+    () => activeProducts.filter((p) => p.stock === 0).length,
+    [activeProducts]
   );
 
   // Product counts per category
@@ -174,9 +183,12 @@ export const ProductPage: React.FC = () => {
     return counts;
   }, [products]);
 
+  // Current Products according to productStatusTab
+  const currentProductPool = productStatusTab === 'active' ? activeProducts : inactiveProducts;
+
   // Filtered Products
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return currentProductPool.filter((p) => {
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
         p.name.toLowerCase().includes(query) ||
@@ -190,7 +202,7 @@ export const ProductPage: React.FC = () => {
 
       return matchesSearch && matchesCategory && matchesStock;
     });
-  }, [products, searchQuery, categoryFilter, stockFilter]);
+  }, [currentProductPool, searchQuery, categoryFilter, stockFilter]);
 
   // Paginated Products
   const paginatedProducts = useMemo(() => {
@@ -199,9 +211,7 @@ export const ProductPage: React.FC = () => {
   }, [filteredProducts, currentPage, itemsPerPage]);
 
   // Reset pagination if filtered length changes
-  const handleFilterChange = (
-    updater: () => void
-  ) => {
+  const handleFilterChange = (updater: () => void) => {
     updater();
     setCurrentPage(1);
     setSelectedIds([]);
@@ -224,41 +234,70 @@ export const ProductPage: React.FC = () => {
     );
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkToggleStatus = async () => {
     if (selectedIds.length === 0) return;
+    const isActivating = productStatusTab === 'inactive';
+    const actionText = isActivating ? 'mengaktifkan kembali' : 'menonaktifkan';
+
     if (
       window.confirm(
-        `Apakah Anda yakin ingin menghapus ${selectedIds.length} produk yang dipilih?`
+        `Apakah Anda yakin ingin ${actionText} ${selectedIds.length} produk yang dipilih?`
       )
     ) {
-      setProducts((prev) => prev.filter((p) => !selectedIds.includes(p.id)));
-      showToast(`${selectedIds.length} produk telah dihapus`, 'info');
-      setSelectedIds([]);
+      try {
+        setIsProductsLoading(true);
+        await Promise.all(
+          selectedIds.map((id) => toggleProductStatus(id, isActivating, categories))
+        );
+        showToast(
+          `${selectedIds.length} produk berhasil ${
+            isActivating ? 'diaktifkan kembali' : 'dinonaktifkan'
+          }!`,
+          'success'
+        );
+        setSelectedIds([]);
+        await fetchProductsData();
+      } catch (error: any) {
+        console.error('Error saat mengubah status produk massal:', error);
+        showToast(error.message || 'Gagal mengubah status produk massal.', 'error');
+      } finally {
+        setIsProductsLoading(false);
+      }
     }
   };
 
-  const handleBulkCategoryChange = () => {
+  const handleBulkCategoryChange = async () => {
     if (selectedIds.length === 0) return;
     const newCat = window.prompt(
-      `Pilih kategori baru untuk ${selectedIds.length} produk terpilih:\n${categories
+      `Pilih kategori baru untuk ${selectedIds.length} produk terpilih:\n${activeCategories
         .map((c) => c.name)
         .join(', ')}`,
-      categories[0]?.name
+      activeCategories[0]?.name
     );
     if (newCat && categories.some((c) => c.name.toLowerCase() === newCat.trim().toLowerCase())) {
       const targetCat = categories.find(
         (c) => c.name.toLowerCase() === newCat.trim().toLowerCase()
-      )!.name;
-      setProducts((prev) =>
-        prev.map((p) =>
-          selectedIds.includes(p.id) ? { ...p, category: targetCat } : p
-        )
-      );
-      showToast(
-        `Kategori ${selectedIds.length} produk diubah menjadi "${targetCat}"`,
-        'success'
-      );
-      setSelectedIds([]);
+      )!;
+
+      try {
+        setIsProductsLoading(true);
+        await Promise.all(
+          selectedIds.map((id) =>
+            updateProduct(id, { categoryId: targetCat.id }, categories)
+          )
+        );
+        showToast(
+          `Kategori ${selectedIds.length} produk diubah menjadi "${targetCat.name}"`,
+          'success'
+        );
+        setSelectedIds([]);
+        await fetchProductsData();
+      } catch (error: any) {
+        console.error('Error update kategori massal:', error);
+        showToast(error.message || 'Gagal mengubah kategori massal.', 'error');
+      } finally {
+        setIsProductsLoading(false);
+      }
     }
   };
 
@@ -289,6 +328,7 @@ export const ProductPage: React.FC = () => {
             stock: formData.stock,
             unit: formData.unit,
             imageUrl: formData.image,
+            isActive: formData.isActive,
           },
           categories
         );
@@ -320,28 +360,24 @@ export const ProductPage: React.FC = () => {
     }
   };
 
-  const handleDeleteProduct = (product: ProductItem) => {
-    setProductToDelete(product);
-  };
-
-  const handleConfirmDeleteProduct = async () => {
-    if (!productToDelete) return;
-
+  const handleToggleProductStatus = async (product: ProductItem, newStatus: boolean) => {
     try {
-      setIsDeletingProduct(true);
-      await deleteProduct(productToDelete.id);
-      setProductToDelete(null);
-      setSelectedIds((prev) => prev.filter((id) => id !== productToDelete.id));
+      setIsSubmittingProduct(true);
+      await toggleProductStatus(product.id, newStatus, categories);
+      showToast(
+        `Produk "${product.name}" berhasil ${newStatus ? 'diaktifkan kembali' : 'dinonaktifkan'}!`,
+        'success'
+      );
+      setIsProductModalOpen(false);
+      setEditingProduct(null);
       await fetchProductsData();
-      showToast(`Produk "${productToDelete.name}" telah dihapus`, 'info');
     } catch (error: any) {
-      console.error('Error saat menghapus produk:', error);
-      showToast(error.message || 'Gagal menghapus produk.', 'error');
+      console.error('Error saat mengubah status produk:', error);
+      showToast(error.message || 'Gagal mengubah status produk.', 'error');
     } finally {
-      setIsDeletingProduct(false);
+      setIsSubmittingProduct(false);
     }
   };
-
 
   // Category CRUD
   const handleOpenAddCategory = () => {
@@ -354,13 +390,12 @@ export const ProductPage: React.FC = () => {
     setIsCategoryModalOpen(true);
   };
 
-  const handleSaveCategory = async (name: string, emoji: string) => {
+  const handleSaveCategory = async (name: string) => {
     try {
       setIsSubmittingCategory(true);
       if (editingCategory) {
         // Edit existing category via API
-        await updateCategory(editingCategory.id, { name }, emoji);
-        // Update product category names in memory if changed
+        await updateCategory(editingCategory.id, { name });
         if (editingCategory.name !== name) {
           setProducts((prev) =>
             prev.map((p) =>
@@ -371,7 +406,7 @@ export const ProductPage: React.FC = () => {
         showToast(`Kategori "${name}" berhasil diperbarui!`, 'success');
       } else {
         // Create new category via API
-        await createCategory({ name }, emoji);
+        await createCategory({ name });
         showToast(`Kategori "${name}" berhasil ditambahkan!`, 'success');
       }
       setIsCategoryModalOpen(false);
@@ -385,28 +420,26 @@ export const ProductPage: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = (cat: CategoryItem) => {
-    setCategoryToDelete(cat);
-  };
-
-  const handleConfirmDeleteCategory = async () => {
-    if (!categoryToDelete) return;
-
+  const handleToggleCategoryStatus = async (category: CategoryItem, newStatus: boolean) => {
     try {
-      setIsDeletingCategory(true);
-      await deleteCategory(categoryToDelete.id);
-      setCategoryToDelete(null);
+      setIsSubmittingCategory(true);
+      await toggleCategoryStatus(category.id, newStatus);
+      showToast(
+        `Kategori "${category.name}" berhasil ${
+          newStatus ? 'diaktifkan kembali' : 'dinonaktifkan'
+        }!`,
+        'success'
+      );
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
       await fetchCategoriesData();
-      showToast(`Kategori "${categoryToDelete.name}" berhasil dihapus`, 'info');
     } catch (error: any) {
-      console.error('Error saat menghapus kategori:', error);
-      showToast(error.message || 'Gagal menghapus kategori.', 'error');
+      console.error('Error saat mengubah status kategori:', error);
+      showToast(error.message || 'Gagal mengubah status kategori.', 'error');
     } finally {
-      setIsDeletingCategory(false);
+      setIsSubmittingCategory(false);
     }
   };
-
-
 
   return (
     <div className="w-full flex-1">
@@ -424,50 +457,62 @@ export const ProductPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Segmented Tab Switcher */}
+          {/* Segmented Tab Switcher (Produk / Kategori) */}
           <div className="inline-flex p-1 rounded-xl bg-surface-container-high self-start lg:self-auto shadow-xs">
             {canViewProducts && (
-            <button
-              onClick={() => setActiveTab('produk')}
-              type="button"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${activeTab === 'produk'
-                  ? 'bg-surface-card text-primary font-bold shadow-xs'
-                  : 'text-on-surface-variant hover:text-on-surface font-medium'
+              <button
+                onClick={() => {
+                  setActiveTab('produk');
+                  setCurrentPage(1);
+                  setSelectedIds([]);
+                }}
+                type="button"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
+                  activeTab === 'produk'
+                    ? 'bg-surface-card text-primary font-bold shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface font-medium'
                 }`}
-            >
-              <Package className="w-4 h-4" />
-              <span>Daftar Produk</span>
-              <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'produk'
-                    ? 'bg-primary-container text-on-primary-container'
-                    : 'bg-surface-container-highest text-on-surface'
-                  }`}
               >
-                {products.length}
-              </span>
-            </button>
+                <Package className="w-4 h-4" />
+                <span>Daftar Produk</span>
+                <span
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                    activeTab === 'produk'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-highest text-on-surface'
+                  }`}
+                >
+                  {products.length}
+                </span>
+              </button>
             )}
 
             {canViewCategories && (
-            <button
-              onClick={() => setActiveTab('kategori')}
-              type="button"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${activeTab === 'kategori'
-                  ? 'bg-surface-card text-primary font-bold shadow-xs'
-                  : 'text-on-surface-variant hover:text-on-surface font-medium'
+              <button
+                onClick={() => {
+                  setActiveTab('kategori');
+                  setCurrentPage(1);
+                  setSelectedIds([]);
+                }}
+                type="button"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 cursor-pointer ${
+                  activeTab === 'kategori'
+                    ? 'bg-surface-card text-primary font-bold shadow-xs'
+                    : 'text-on-surface-variant hover:text-on-surface font-medium'
                 }`}
-            >
-              <Tags className="w-4 h-4" />
-              <span>Daftar Kategori</span>
-              <span
-                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'kategori'
-                    ? 'bg-primary-container text-on-primary-container'
-                    : 'bg-surface-container-highest text-on-surface'
-                  }`}
               >
-                {categories.length}
-              </span>
-            </button>
+                <Tags className="w-4 h-4" />
+                <span>Daftar Kategori</span>
+                <span
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                    activeTab === 'kategori'
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'bg-surface-container-highest text-on-surface'
+                  }`}
+                >
+                  {categories.length}
+                </span>
+              </button>
             )}
           </div>
         </div>
@@ -480,9 +525,61 @@ export const ProductPage: React.FC = () => {
           outOfStockCount={outOfStockCount}
         />
 
-        {/* Section: Daftar Produk */}
+        {/* ========================================================= */}
+        {/* SECTION: PRODUK                                          */}
+        {/* ========================================================= */}
         {activeTab === 'produk' && canViewProducts && (
           <div className="space-y-4">
+            {/* Sub-tab: Aktif vs Nonaktif */}
+            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-2">
+              <div className="inline-flex p-1 rounded-lg bg-surface-container-high/60 gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductStatusTab('active');
+                    setCurrentPage(1);
+                    setSelectedIds([]);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                    productStatusTab === 'active'
+                      ? 'bg-surface-card text-primary shadow-xs'
+                      : 'text-text-muted hover:text-on-surface'
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Produk Aktif</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[11px] bg-primary/10 text-primary">
+                    {activeProducts.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductStatusTab('inactive');
+                    setCurrentPage(1);
+                    setSelectedIds([]);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                    productStatusTab === 'inactive'
+                      ? 'bg-surface-card text-on-surface shadow-xs'
+                      : 'text-text-muted hover:text-on-surface'
+                  }`}
+                >
+                  <Archive className="w-4 h-4" />
+                  <span>Produk Nonaktif</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[11px] bg-surface-container-highest text-text-muted">
+                    {inactiveProducts.length}
+                  </span>
+                </button>
+              </div>
+
+              {productStatusTab === 'inactive' && (
+                <span className="text-xs text-text-muted hidden sm:inline">
+                  Tabel produk yang dinonaktifkan dari katalog penjualan.
+                </span>
+              )}
+            </div>
+
             {/* Action Toolbar */}
             <div className="bg-surface-card p-4 rounded-xl shadow-xs border border-border-subtle/60 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
               {/* Search & Filters */}
@@ -496,7 +593,9 @@ export const ProductPage: React.FC = () => {
                     onChange={(e) =>
                       handleFilterChange(() => setSearchQuery(e.target.value))
                     }
-                    placeholder="Cari produk berdasarkan nama, kode, atau SKU..."
+                    placeholder={`Cari produk ${
+                      productStatusTab === 'inactive' ? 'non-aktif ' : ''
+                    }berdasarkan nama, kode, atau SKU...`}
                     className="w-full pl-10 pr-4 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted outline-none ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card transition-all"
                   />
                 </div>
@@ -554,39 +653,36 @@ export const ProductPage: React.FC = () => {
                 </div>
               </div>
 
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2.5 shrink-0">
-                {/* <button
-                  onClick={handleOpenAddCategory}
-                  type="button"
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-primary bg-primary-fixed/40 hover:bg-primary-fixed transition-colors active:scale-[0.98] cursor-pointer"
-                >
-                  <BookmarkPlus className="w-4 h-4" />
-                  <span>Kategori</span>
-                </button> */}
-                {canCreateProduct && (
-                <button
-                  onClick={handleOpenCreateProduct}
-                  type="button"
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:bg-primary-container shadow-xs transition-all active:scale-[0.98] cursor-pointer"
-                >
-                  <PlusCircle className="w-5 h-5" />
-                  <span>Tambah Produk</span>
-                </button>
-                )}
-              </div>
+              {/* Action Buttons (hanya untuk tab produk aktif) */}
+              {productStatusTab === 'active' && canCreateProduct && (
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    onClick={handleOpenCreateProduct}
+                    type="button"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-on-primary bg-primary hover:bg-primary-container shadow-xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    <span>Tambah Produk</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Bulk Selection Banner */}
             <BulkActionBanner
               selectedCount={selectedIds.length}
               onBulkCategoryChange={canUpdateProduct ? handleBulkCategoryChange : undefined}
-              onBulkDelete={canDeleteProduct ? handleBulkDelete : undefined}
+              onBulkToggleStatus={canUpdateProduct ? handleBulkToggleStatus : undefined}
+              bulkActionLabel={
+                productStatusTab === 'active'
+                  ? 'Nonaktifkan Terpilih'
+                  : 'Aktifkan Terpilih'
+              }
             />
 
-            {/* Data Table */}
+            {/* Data Table (Terpisah untuk Aktif & Nonaktif) */}
             <ProductTable
+              key={productStatusTab}
               products={paginatedProducts}
               totalFilteredCount={filteredProducts.length}
               currentPage={currentPage}
@@ -600,22 +696,84 @@ export const ProductPage: React.FC = () => {
               onToggleSelectAll={handleToggleSelectAll}
               onToggleSelectOne={handleToggleSelectOne}
               onEdit={canUpdateProduct ? handleOpenEditProduct : undefined}
-              onDelete={canDeleteProduct ? handleDeleteProduct : undefined}
+              onToggleStatus={
+                canUpdateProduct
+                  ? (prod, targetStatus) => handleToggleProductStatus(prod, targetStatus)
+                  : undefined
+              }
+              isInactiveTable={productStatusTab === 'inactive'}
               isLoading={isProductsLoading}
             />
           </div>
         )}
 
-        {/* Section: Daftar Kategori */}
+        {/* ========================================================= */}
+        {/* SECTION: KATEGORI                                         */}
+        {/* ========================================================= */}
         {activeTab === 'kategori' && canViewCategories && (
-          <CategoryGrid
-            categories={categories}
-            productCounts={productCounts}
-            onOpenAddCategory={canCreateCategory ? handleOpenAddCategory : undefined}
-            onEditCategory={canUpdateCategory ? handleEditCategory : undefined}
-            onDeleteCategory={canDeleteCategory ? handleDeleteCategory : undefined}
-            isLoading={isCategoriesLoading}
-          />
+          <div className="space-y-4">
+            {/* Sub-tab: Kategori Aktif vs Nonaktif */}
+            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-2">
+              <div className="inline-flex p-1 rounded-lg bg-surface-container-high/60 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCategoryStatusTab('active')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                    categoryStatusTab === 'active'
+                      ? 'bg-surface-card text-primary shadow-xs'
+                      : 'text-text-muted hover:text-on-surface'
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Kategori Aktif</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[11px] bg-primary/10 text-primary">
+                    {activeCategories.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategoryStatusTab('inactive')}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                    categoryStatusTab === 'inactive'
+                      ? 'bg-surface-card text-on-surface shadow-xs'
+                      : 'text-text-muted hover:text-on-surface'
+                  }`}
+                >
+                  <Archive className="w-4 h-4" />
+                  <span>Kategori Nonaktif</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[11px] bg-surface-container-highest text-text-muted">
+                    {inactiveCategories.length}
+                  </span>
+                </button>
+              </div>
+
+              {categoryStatusTab === 'inactive' && (
+                <span className="text-xs text-text-muted hidden sm:inline">
+                  Daftar kategori yang dinonaktifkan.
+                </span>
+              )}
+            </div>
+
+            {/* Content: Kategori Aktif / Nonaktif (Keduanya menggunakan Grid) */}
+            <CategoryGrid
+              key={categoryStatusTab}
+              categories={categoryStatusTab === 'active' ? activeCategories : inactiveCategories}
+              productCounts={productCounts}
+              onOpenAddCategory={
+                categoryStatusTab === 'active' && canCreateCategory
+                  ? handleOpenAddCategory
+                  : undefined
+              }
+              onEditCategory={canUpdateCategory ? handleEditCategory : undefined}
+              onToggleStatus={
+                canUpdateCategory
+                  ? (cat, newStatus) => handleToggleCategoryStatus(cat, newStatus)
+                  : undefined
+              }
+              isInactive={categoryStatusTab === 'inactive'}
+              isLoading={isCategoriesLoading}
+            />
+          </div>
         )}
       </div>
 
@@ -629,8 +787,13 @@ export const ProductPage: React.FC = () => {
             setEditingProduct(null);
           }}
           onSave={handleSaveProduct}
+          onToggleStatus={
+            canUpdateProduct
+              ? (prod, newStatus) => handleToggleProductStatus(prod, newStatus)
+              : undefined
+          }
           editingProduct={editingProduct}
-          categories={categories}
+          categories={activeCategories}
           isSubmitting={isSubmittingProduct}
         />
       )}
@@ -645,104 +808,15 @@ export const ProductPage: React.FC = () => {
             setEditingCategory(null);
           }}
           onSave={handleSaveCategory}
+          onToggleStatus={
+            canUpdateCategory
+              ? (cat, newStatus) => handleToggleCategoryStatus(cat, newStatus)
+              : undefined
+          }
           editingCategory={editingCategory}
           isSubmitting={isSubmittingCategory}
         />
       )}
-
-      {/* Delete Product Confirmation Dialog */}
-      <Dialog
-        open={Boolean(productToDelete)}
-        onOpenChange={(open) => !open && !isDeletingProduct && setProductToDelete(null)}
-      >
-        <DialogContent size="sm" className="rounded-2xl border border-border-subtle p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4.5 bg-surface-container-high/40 border-b border-border-subtle flex flex-row items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-status-danger/10 flex items-center justify-center text-status-danger shrink-0">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <DialogTitle className="text-base font-bold text-on-surface">
-                Hapus Produk
-              </DialogTitle>
-              <DialogDescription className="text-xs text-text-muted">
-                Tindakan ini akan menghapus produk dari katalog inventaris toko.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-          <DialogBody className="p-6">
-            <p className="text-sm text-on-surface leading-relaxed">
-              Apakah Anda yakin ingin menghapus produk{' '}
-              <span className="font-bold text-on-surface">"{productToDelete?.name}"</span>?
-            </p>
-          </DialogBody>
-          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isDeletingProduct}
-              onClick={() => setProductToDelete(null)}
-            >
-              Batal
-            </Button>
-            <Button
-              type="button"
-              variant="danger"
-              isLoading={isDeletingProduct}
-              onClick={handleConfirmDeleteProduct}
-              className="gap-2"
-            >
-              <span>Hapus Produk</span>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Category Confirmation Dialog */}
-      <Dialog
-        open={Boolean(categoryToDelete)}
-        onOpenChange={(open) => !open && !isDeletingCategory && setCategoryToDelete(null)}
-      >
-        <DialogContent size="sm" className="rounded-2xl border border-border-subtle p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4.5 bg-surface-container-high/40 border-b border-border-subtle flex flex-row items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-status-danger/10 flex items-center justify-center text-status-danger shrink-0">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <DialogTitle className="text-base font-bold text-on-surface">
-                Hapus Kategori
-              </DialogTitle>
-              <DialogDescription className="text-xs text-text-muted">
-                Tindakan ini akan menghapus kategori dari katalog.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-          <DialogBody className="p-6">
-            <p className="text-sm text-on-surface leading-relaxed">
-              Apakah Anda yakin ingin menghapus kategori{' '}
-              <span className="font-bold text-on-surface">"{categoryToDelete?.name}"</span>?
-            </p>
-          </DialogBody>
-          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isDeletingCategory}
-              onClick={() => setCategoryToDelete(null)}
-            >
-              Batal
-            </Button>
-            <Button
-              type="button"
-              variant="danger"
-              isLoading={isDeletingCategory}
-              onClick={handleConfirmDeleteCategory}
-              className="gap-2"
-            >
-              <span>Hapus Kategori</span>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Standard Toast Notification */}
       {toast && (
@@ -754,9 +828,8 @@ export const ProductPage: React.FC = () => {
           position="bottom-right"
         />
       )}
-
     </div>
   );
 };
-export default ProductPage;
 
+export default ProductPage;

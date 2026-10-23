@@ -6,10 +6,23 @@ import {
   Printer,
   FileSpreadsheet,
   Loader2,
+  Eye,
+  EyeOff,
+  CreditCard,
+  Banknote,
+  QrCode,
+  Building2,
 } from 'lucide-react';
 import type { PaymentFilter, ReportToolbarProps } from '../../../types/report';
 import { Button } from '../../../components/ui/Button';
 import { TextField } from '../../../components/ui/TextField';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../../components/ui/Select';
 
 export type { ReportToolbarProps };
 
@@ -25,8 +38,10 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
   onPrint,
   activeTab = 'transaksi',
   isExportingExcel = false,
+  showInactiveProducts = false,
+  onToggleInactiveProducts,
+  inactiveProductsCount = 0,
 }) => {
-  const paymentOptions: PaymentFilter[] = ['Semua', 'Tunai', 'QRIS', 'Transfer'];
   const isMonthly = activeTab === 'bulanan';
   const isDaily = activeTab === 'harian';
 
@@ -61,7 +76,7 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
 
         {/* Search input with TextField UI Component (Hidden on Monthly Tab) */}
         {!isMonthly && !isDaily && (
-          <div className="flex-1 min-w-[220px] max-w-sm">
+          <div className="w-44 sm:w-52">
             <TextField
               type="text"
               value={searchQuery}
@@ -74,31 +89,88 @@ export const ReportToolbar: React.FC<ReportToolbarProps> = ({
           </div>
         )}
 
-        {/* Quick filter payment chips using Button Component */}
+        {/* Payment Method Filter Dropdown */}
         {!isMonthly && (
-          <div className="h-10 flex items-center gap-1 bg-surface-bg px-2 rounded-lg border border-border-subtle/40">
-            <span className="text-xs text-text-muted pr-1 font-medium shrink-0">Metode:</span>
-            {paymentOptions.map((opt) => {
-              const isSelected = selectedPayment === opt;
-              return (
-                <Button
-                  key={opt}
-                  type="button"
-                  variant={isSelected ? 'primary' : 'ghost'}
-                  size="xs"
-                  onClick={() => onPaymentChange(opt)}
-                  className={`text-xs h-7 px-2.5 rounded-md transition-all ${isSelected
-                    ? 'font-semibold shadow-xs'
-                    : 'text-text-muted hover:text-on-surface hover:bg-surface-card font-medium'
-                    }`}
-                >
-                  {opt}
-                </Button>
-              );
-            })}
+          <div className="w-40 sm:w-44">
+            <Select
+              value={selectedPayment}
+              onValueChange={(val) => onPaymentChange(val as PaymentFilter)}
+            >
+              <SelectTrigger
+                size="default"
+                className="h-10 bg-surface-bg border-border-subtle/40 rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container-high/40 transition-colors"
+                title="Pilih Filter Metode Pembayaran"
+              >
+                <div className="flex items-center gap-1.5 truncate">
+                  <CreditCard className="w-3.5 h-3.5 text-text-muted shrink-0" />
+                  <span className="text-text-muted font-normal text-xs">Metode:</span>
+                  <SelectValue placeholder="Metode" />
+                </div>
+              </SelectTrigger>
+              <SelectContent side="bottom" align="start" className="min-w-[11rem] z-50">
+                <SelectItem value="Semua">
+                  <span className="font-medium">Semua Metode</span>
+                </SelectItem>
+                <SelectItem value="Tunai">
+                  <div className="flex items-center gap-2">
+                    <Banknote className="w-3.5 h-3.5 text-secondary shrink-0" />
+                    <span>Tunai</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="QRIS">
+                  <div className="flex items-center gap-2">
+                    <QrCode className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span>QRIS</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="Transfer">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>Transfer</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )}
 
+        {/* Tombol Pintar: Toggle Tampilkan / Sembunyikan Produk Nonaktif */}
+        {inactiveProductsCount > 0 && (
+          <Button
+            type="button"
+            variant={showInactiveProducts ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={onToggleInactiveProducts}
+            leftIcon={
+              showInactiveProducts ? (
+                <EyeOff className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <Eye className="w-4 h-4 text-text-muted" />
+              )
+            }
+            className={`h-10 text-xs px-3 rounded-lg border transition-all ${
+              showInactiveProducts
+                ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30 hover:bg-amber-500/20 font-semibold'
+                : 'bg-surface-bg hover:bg-surface-container-high border-border-subtle/40 text-text-muted hover:text-on-surface font-medium'
+            }`}
+            title={
+              showInactiveProducts
+                ? `Klik untuk menyembunyikan ${inactiveProductsCount} produk nonaktif dari matriks laporan`
+                : `Klik untuk menampilkan ${inactiveProductsCount} produk nonaktif yang tersimpan dalam riwayat`
+            }
+          >
+            <span>{showInactiveProducts ? 'Sembunyikan Nonaktif' : 'Produk Nonaktif'}</span>
+            <span
+              className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                showInactiveProducts
+                  ? 'bg-amber-500 text-white dark:bg-amber-600'
+                  : 'bg-surface-container-highest text-text-muted'
+              }`}
+            >
+              {inactiveProductsCount}
+            </span>
+          </Button>
+        )}
       </div>
 
       {/* Action Buttons (Export Raw Data Excel & Print/PDF) */}

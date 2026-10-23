@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, RotateCw, ImagePlus } from 'lucide-react';
+import { Package, RotateCw, ImagePlus, PowerOff, CheckCircle2 } from 'lucide-react';
 
 import {
   Dialog,
@@ -21,12 +21,15 @@ import {
 
 import type { ProductModalProps } from '../../../types/products';
 
+import { DeactivateConfirmModal } from './DeactivateConfirmModal';
+
 export type { ProductModalProps };
 
 export const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onToggleStatus,
   editingProduct,
   categories,
   isSubmitting = false,
@@ -38,6 +41,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [stock, setStock] = useState<string>('');
   const [unit, setUnit] = useState('Pcs');
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
     if (editingProduct) {
@@ -97,25 +102,53 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       stock: numStock,
       unit: unit.trim() || 'Pcs',
       image: imageUrl.trim(),
+      isActive: editingProduct ? editingProduct.isActive : true,
     });
   };
 
+  const handleConfirmToggleStatus = async () => {
+    if (!editingProduct || !onToggleStatus) return;
+    const newStatus = !editingProduct.isActive;
+    try {
+      setIsToggling(true);
+      await onToggleStatus(editingProduct, newStatus);
+      setIsConfirmModalOpen(false);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
   const isEdit = Boolean(editingProduct);
+  const isActive = editingProduct ? editingProduct.isActive !== false : true;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && !isToggling && onClose()}>
       <DialogContent size="2xl" className="rounded-2xl border border-border-subtle p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 py-4.5 bg-surface-container-high/40 border-b border-border-subtle flex flex-row items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
             <Package className="w-5 h-5" />
           </div>
-          <div className="flex flex-col">
-            <DialogTitle className="text-base sm:text-lg font-bold text-on-surface">
-              {isEdit ? 'Edit Data Produk' : 'Tambah Produk Baru'}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-text-muted">
+          <div className="flex flex-col flex-1">
+            <div className="flex items-center gap-2">
+              <DialogTitle className="text-base sm:text-lg font-bold text-on-surface">
+                {isEdit ? 'Edit Data Produk' : 'Tambah Produk Baru'}
+              </DialogTitle>
+              {isEdit && (
+                <span
+                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                    isActive
+                      ? 'bg-status-success/15 text-status-success'
+                      : 'bg-surface-container-highest text-text-muted'
+                  }`}
+                >
+                  {isActive ? 'Aktif' : 'Nonaktif'}
+                </span>
+              )}
+            </div>
+            <DialogDescription className="text-xs text-text-muted mt-0.5">
               {isEdit
-                ? 'Perbarui informasi harga, stok, atau kategori produk.'
+                ? 'Perbarui informasi harga, stok, kategori, atau ubah status aktif/nonaktif.'
                 : 'Lengkapi formulir untuk menambahkan produk baru ke katalog toko.'}
             </DialogDescription>
           </div>
@@ -131,7 +164,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <input
                 type="text"
                 required
-                disabled={isSubmitting}
+                disabled={isSubmitting || isToggling}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Contoh: Mie Ayam Komplit"
@@ -148,7 +181,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <Select
                   value={selectedCategoryId}
                   onValueChange={setSelectedCategoryId}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isToggling}
                 >
                   <SelectTrigger
                     size="default"
@@ -159,7 +192,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
-                        {cat.emoji || '🏷️'} {cat.name}
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -174,7 +207,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <div className="relative">
                   <input
                     type="text"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isToggling}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="PRD-001"
@@ -182,7 +215,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   />
                   <button
                     type="button"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isToggling}
                     onClick={handleGenerateCode}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary cursor-pointer p-1 transition-colors disabled:opacity-50"
                     title="Generate Kode Acak"
@@ -207,7 +240,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     type="number"
                     required
                     min="0"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isToggling}
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="18000"
@@ -225,7 +258,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="number"
                   required
                   min="0"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isToggling}
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                   placeholder="0"
@@ -241,7 +274,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 <input
                   type="text"
                   list="unit-options"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isToggling}
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
                   placeholder="Pcs"
@@ -271,7 +304,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <div className="flex items-center gap-3">
                 <input
                   type="url"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isToggling}
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://example.com/foto-produk.jpg"
@@ -295,25 +328,68 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             </div>
           </DialogBody>
 
-          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-end gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isSubmitting}
-            >
-              <span>{isEdit ? 'Simpan Perubahan' : 'Tambah Produk'}</span>
-            </Button>
+          <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-between gap-2.5">
+            {/* Tombol Nonaktifkan / Aktifkan saat update */}
+            {isEdit && onToggleStatus ? (
+              <Button
+                type="button"
+                variant={isActive ? 'danger' : 'outline'}
+                onClick={() => setIsConfirmModalOpen(true)}
+                disabled={isSubmitting || isToggling}
+                isLoading={isToggling}
+                className="gap-1.5 text-xs sm:text-sm"
+              >
+                {isActive ? (
+                  <>
+                    <PowerOff className="w-4 h-4" />
+                    <span>Nonaktifkan Produk</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-status-success" />
+                    <span className="text-status-success">Aktifkan Kembali</span>
+                  </>
+                )}
+              </Button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting || isToggling}
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={isSubmitting}
+                disabled={isToggling}
+              >
+                <span>{isEdit ? 'Simpan Perubahan' : 'Tambah Produk'}</span>
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Modal Verifikasi Penonaktifan Produk */}
+    {isConfirmModalOpen && editingProduct && (
+      <DeactivateConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmToggleStatus}
+        itemName={editingProduct.name}
+        itemType="produk"
+        isActivating={!isActive}
+        isLoading={isToggling}
+      />
+    )}
+  </>
   );
 };

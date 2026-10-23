@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Pencil, PlusCircle, Trash2, Loader2, Tag, Search, ArrowUpDown, X } from 'lucide-react';
+import { Pencil, PlusCircle, Loader2, Tag, Search, ArrowUpDown, X, CheckCircle2 } from 'lucide-react';
 import type { CategoryGridProps, SortOption } from '../../../types/products';
 import { Button } from '../../../components/ui/Button';
 import {
@@ -17,7 +17,8 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
   productCounts,
   onOpenAddCategory,
   onEditCategory,
-  onDeleteCategory,
+  onToggleStatus,
+  isInactive = false,
   isLoading = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +64,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari kategori berdasarkan nama..."
+              placeholder={`Cari kategori ${isInactive ? 'non-aktif ' : ''}berdasarkan nama...`}
               className="w-full pl-10 pr-9 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted outline-none ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card transition-all"
             />
             {searchQuery && (
@@ -78,7 +79,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
             )}
           </div>
 
-          {/* Sort Dropdown using UI Select Component */}
+          {/* Sort Dropdown */}
           <div className="min-w-[190px]">
             <Select
               value={sortBy}
@@ -105,13 +106,12 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
           {/* Count Badge */}
           <span className="hidden lg:inline-flex items-center text-xs text-text-muted font-medium whitespace-nowrap bg-surface-bg px-3 py-2.5 rounded-lg border border-border-subtle/60">
             <strong className="text-on-surface mr-1">{filteredAndSortedCategories.length}</strong> dari{' '}
-            {categories.length} kategori
+            {categories.length} kategori {isInactive ? 'non-aktif' : ''}
           </span>
         </div>
 
-
-        {/* Action Button */}
-        {onOpenAddCategory && (
+        {/* Action Button (hanya pada kategori aktif) */}
+        {!isInactive && onOpenAddCategory && (
           <div className="flex items-center gap-2.5 shrink-0">
             <Button
               onClick={onOpenAddCategory}
@@ -125,7 +125,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
         )}
       </div>
 
-
       {/* Grid Content */}
       {isLoading ? (
         <div className="bg-surface-card p-12 rounded-xl border border-border-subtle/60 flex flex-col items-center justify-center gap-3 text-center">
@@ -138,12 +137,16 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
             <Tag className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="text-base font-bold text-on-surface">Belum ada kategori</h4>
+            <h4 className="text-base font-bold text-on-surface">
+              {isInactive ? 'Belum ada kategori nonaktif' : 'Belum ada kategori aktif'}
+            </h4>
             <p className="text-xs text-text-muted mt-1">
-              Tambahkan kategori baru untuk mulai mengelompokkan produk Anda.
+              {isInactive
+                ? 'Semua kategori saat ini berstatus aktif.'
+                : 'Tambahkan kategori baru untuk mulai mengelompokkan produk Anda.'}
             </p>
           </div>
-          {onOpenAddCategory && (
+          {!isInactive && onOpenAddCategory && (
             <Button
               onClick={onOpenAddCategory}
               variant="primary"
@@ -177,14 +180,13 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
             return (
               <div
                 key={cat.id}
-                className="bg-surface-card p-4 rounded-xl shadow-xs border border-border-subtle/60 flex items-start justify-between transition-all hover:shadow-md"
+                className={`bg-surface-card p-4 rounded-xl shadow-xs border border-border-subtle/60 flex items-center justify-between transition-all hover:shadow-md ${
+                  isInactive ? 'opacity-80 bg-surface-bg/30' : ''
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl ${cat.bgClass || 'bg-surface-container-high'
-                      } ${cat.textClass || 'text-on-surface'}`}
-                  >
-                    {cat.emoji || '🏷️'}
+                  <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+                    <Tag className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-base font-bold text-on-surface">
@@ -195,7 +197,17 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {isInactive && onToggleStatus && (
+                    <button
+                      onClick={() => onToggleStatus(cat, true)}
+                      type="button"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center bg-status-success/10 hover:bg-status-success/20 text-status-success transition-colors cursor-pointer"
+                      title="Aktifkan Kembali Kategori"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  )}
                   {onEditCategory && (
                     <button
                       onClick={() => onEditCategory(cat)}
@@ -204,16 +216,6 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
                       title="Edit Kategori"
                     >
                       <Pencil className="w-4 h-4" />
-                    </button>
-                  )}
-                  {onDeleteCategory && (
-                    <button
-                      onClick={() => onDeleteCategory(cat)}
-                      type="button"
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-error/10 hover:text-status-danger transition-colors cursor-pointer"
-                      title="Hapus Kategori"
-                    >
-                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -225,5 +227,3 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({
     </div>
   );
 };
-
-

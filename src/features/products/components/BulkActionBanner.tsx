@@ -1,15 +1,12 @@
 import React from 'react';
 import { CheckSquare } from 'lucide-react';
-interface BulkActionBannerProps {
-  selectedCount: number;
-  onBulkCategoryChange?: () => void;
-  onBulkDelete?: () => void;
-}
+import type { BulkActionBannerProps } from '../../../types/products';
 
 export const BulkActionBanner: React.FC<BulkActionBannerProps> = ({
   selectedCount,
   onBulkCategoryChange,
-  onBulkDelete,
+  onBulkToggleStatus,
+  bulkActionLabel = 'Nonaktifkan Terpilih',
 }) => {
   if (selectedCount === 0) return null;
 
@@ -31,13 +28,13 @@ export const BulkActionBanner: React.FC<BulkActionBannerProps> = ({
             Ubah Kategori Massal
           </button>
         )}
-        {onBulkDelete && (
+        {onBulkToggleStatus && (
           <button
-            onClick={onBulkDelete}
+            onClick={onBulkToggleStatus}
             type="button"
             className="px-3 py-1.5 rounded-lg bg-error-container text-error text-xs font-semibold hover:bg-status-danger hover:text-on-error transition-colors cursor-pointer"
           >
-            Hapus Terpilih
+            {bulkActionLabel}
           </button>
         )}
       </div>

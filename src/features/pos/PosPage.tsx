@@ -95,14 +95,18 @@ export const PosPage: React.FC = () => {
     try {
       if (!silent) setIsLoading(true);
       setError(null);
-      const fetchedCategories = await getCategories().catch(() => []);
+      const fetchedCategories = (await getCategories().catch(() => [])).filter(
+        (c) => c.isActive !== false
+      );
       setCategories(fetchedCategories);
 
       const fetchedProducts = await getProducts(fetchedCategories);
-      const posProducts: Product[] = fetchedProducts.map((p) => ({
-        ...p,
-        isLowStock: p.stock > 0 && p.stock <= 5,
-      }));
+      const posProducts: Product[] = fetchedProducts
+        .filter((p) => p.isActive !== false)
+        .map((p) => ({
+          ...p,
+          isLowStock: p.stock > 0 && p.stock <= 5,
+        }));
       setProducts(posProducts);
     } catch (err: any) {
       console.error('Error saat memuat produk POS:', err);

@@ -61,6 +61,7 @@ export const mapBackendProductToProductItem = (
     updatedAt: updatedDateFormatted,
     image: backendProduct.imageUrl || DEFAULT_PRODUCT_IMAGE,
     imageAlt: backendProduct.name || 'Foto Produk',
+    isActive: backendProduct.isActive !== false,
     createdAt: backendProduct.createdAt,
   };
 };
@@ -122,6 +123,7 @@ export const createProduct = async (
       updatedAt: formatDateTimeShort(new Date()),
       image: body.imageUrl || DEFAULT_PRODUCT_IMAGE,
       imageAlt: body.name,
+      isActive: true,
     };
   } catch (error: any) {
     console.error('Error saat menambahkan produk baru:', error);
@@ -148,6 +150,7 @@ export const updateProduct = async (
     if (payload.unit !== undefined) body.unit = payload.unit;
     if (payload.categoryId !== undefined) body.categoryId = payload.categoryId;
     if (payload.imageUrl !== undefined) body.imageUrl = payload.imageUrl;
+    if (payload.isActive !== undefined) body.isActive = payload.isActive;
 
     const response = await api.put<any>(`/products/${id}`, body);
     const productData: BackendProductItem =
@@ -167,6 +170,7 @@ export const updateProduct = async (
       updatedAt: formatDateTimeShort(new Date()),
       image: payload.imageUrl || DEFAULT_PRODUCT_IMAGE,
       imageAlt: payload.name || 'Produk',
+      isActive: payload.isActive !== undefined ? payload.isActive : true,
     };
   } catch (error: any) {
     console.error(`Error saat memperbarui produk ${id}:`, error);
@@ -174,6 +178,17 @@ export const updateProduct = async (
       error?.response?.data?.message || error?.message || 'Gagal memperbarui produk.'
     );
   }
+};
+
+/**
+ * Mengubah status aktif/nonaktif produk ke backend
+ */
+export const toggleProductStatus = async (
+  id: string,
+  isActive: boolean,
+  categories: CategoryItem[] = []
+): Promise<ProductItem> => {
+  return updateProduct(id, { isActive }, categories);
 };
 
 /**

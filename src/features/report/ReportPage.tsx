@@ -49,6 +49,21 @@ export const ReportPage: React.FC = () => {
   // Products State (diambil dari /products/names)
   const [products, setProducts] = useState<ProductNameItem[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [showInactiveProducts, setShowInactiveProducts] = useState<boolean>(false);
+
+  // Pisahkan produk aktif & nonaktif
+  const activeProducts = useMemo(
+    () => products.filter((p) => p.isActive !== false),
+    [products]
+  );
+  const inactiveProducts = useMemo(
+    () => products.filter((p) => p.isActive === false),
+    [products]
+  );
+  const visibleProducts = useMemo(
+    () => (showInactiveProducts ? products : activeProducts),
+    [showInactiveProducts, products, activeProducts]
+  );
 
   // Data States
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
@@ -402,6 +417,9 @@ export const ReportPage: React.FC = () => {
           onPrint={() => setIsPrintModalOpen(true)}
           activeTab={activeTab}
           isExportingExcel={isExportingExcel}
+          showInactiveProducts={showInactiveProducts}
+          onToggleInactiveProducts={() => setShowInactiveProducts((prev) => !prev)}
+          inactiveProductsCount={inactiveProducts.length}
         />
 
         {/* 5. Tab Views */}
@@ -409,7 +427,7 @@ export const ReportPage: React.FC = () => {
           <TransactionMatrixTable
             transactions={filteredTransactions}
             onViewReceipt={handleOpenReceipt}
-            products={products}
+            products={visibleProducts}
             isLoading={isLoadingProducts || isLoadingTransactions}
           />
         )}
@@ -417,7 +435,7 @@ export const ReportPage: React.FC = () => {
         {activeTab === 'harian' && (
           <DailyReportTable
             records={filteredDailyRecords}
-            products={products}
+            products={visibleProducts}
             isLoading={isLoadingProducts || isLoadingDaily}
           />
         )}
@@ -425,7 +443,7 @@ export const ReportPage: React.FC = () => {
         {activeTab === 'bulanan' && (
           <MonthlyReportView
             records={filteredMonthlyRecords}
-            products={products}
+            products={visibleProducts}
             isLoading={isLoadingProducts || isLoadingMonthly}
           />
         )}
@@ -457,7 +475,7 @@ export const ReportPage: React.FC = () => {
         transactions={filteredTransactions}
         dailyRecords={filteredDailyRecords}
         monthlyRecords={filteredMonthlyRecords}
-        products={products}
+        products={visibleProducts}
         selectedPayment={selectedPayment}
         searchQuery={searchQuery}
       />

@@ -1,11 +1,13 @@
 export interface ProductNameItem {
   _id: string;
   name: string;
+  isActive?: boolean;
 }
 
 export interface BackendProductCategory {
   _id: string;
   name: string;
+  isActive?: boolean;
 }
 
 export interface BackendProductItem {
@@ -17,6 +19,7 @@ export interface BackendProductItem {
   categoryId?: string | BackendProductCategory;
   code?: string;
   unit?: string;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -34,12 +37,14 @@ export interface ProductItem {
   updatedAt: string;
   image: string;
   imageAlt: string;
+  isActive: boolean;
   createdAt?: string;
 }
 
 export interface BackendCategoryItem {
   _id: string;
   name: string;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
@@ -48,7 +53,8 @@ export interface BackendCategoryItem {
 export interface CategoryItem {
   id: string;
   name: string;
-  emoji: string;
+  isActive: boolean;
+  emoji?: string;
   bgClass?: string;
   textClass?: string;
   createdAt?: string;
@@ -56,6 +62,8 @@ export interface CategoryItem {
 }
 
 export type MainTab = 'produk' | 'kategori';
+export type ProductStatusTab = 'active' | 'inactive';
+export type CategoryStatusTab = 'active' | 'inactive';
 export type StockFilter = '' | 'tersedia' | 'menipis' | 'habis';
 export type SortOption = 'name-asc' | 'name-desc' | 'count-desc' | 'count-asc';
 
@@ -69,6 +77,7 @@ export interface ProductFormData {
   stock: number;
   unit?: string;
   image?: string;
+  isActive?: boolean;
 }
 
 export interface CreateProductPayload {
@@ -89,6 +98,7 @@ export interface UpdateProductPayload {
   unit?: string;
   categoryId?: string;
   imageUrl?: string;
+  isActive?: boolean;
 }
 
 export interface CreateCategoryPayload {
@@ -96,7 +106,8 @@ export interface CreateCategoryPayload {
 }
 
 export interface UpdateCategoryPayload {
-  name: string;
+  name?: string;
+  isActive?: boolean;
 }
 
 export interface ToastMessage {
@@ -111,13 +122,16 @@ export interface CategoryGridProps {
   onOpenAddCategory?: () => void;
   onEditCategory?: (category: CategoryItem) => void;
   onDeleteCategory?: (category: CategoryItem) => void;
+  onToggleStatus?: (category: CategoryItem, isActive: boolean) => void;
+  isInactive?: boolean;
   isLoading?: boolean;
 }
 
 export interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (name: string, emoji: string) => Promise<void> | void;
+  onSave: (name: string) => Promise<void> | void;
+  onToggleStatus?: (category: CategoryItem, isActive: boolean) => Promise<void> | void;
   editingCategory?: CategoryItem | null;
   isSubmitting?: boolean;
 }
@@ -126,6 +140,7 @@ export interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ProductFormData) => Promise<void> | void;
+  onToggleStatus?: (product: ProductItem, isActive: boolean) => Promise<void> | void;
   editingProduct?: ProductItem | null;
   categories: CategoryItem[];
   isSubmitting?: boolean;
@@ -143,6 +158,8 @@ export interface ProductTableProps {
   onToggleSelectOne: (id: string) => void;
   onEdit?: (product: ProductItem) => void;
   onDelete?: (product: ProductItem) => void;
+  onToggleStatus?: (product: ProductItem, isActive: boolean) => void;
+  isInactiveTable?: boolean;
   isLoading?: boolean;
 }
 
@@ -155,6 +172,8 @@ export interface StatsCardsProps {
 
 export interface BulkActionBannerProps {
   selectedCount: number;
-  onBulkCategoryChange: () => void;
-  onBulkDelete: () => void;
+  onBulkCategoryChange?: () => void;
+  onBulkDelete?: () => void;
+  onBulkToggleStatus?: () => void;
+  bulkActionLabel?: string;
 }

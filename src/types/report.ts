@@ -100,6 +100,9 @@ export interface ReportToolbarProps {
   onPrint: () => void;
   activeTab?: ReportTab;
   isExportingExcel?: boolean;
+  showInactiveProducts?: boolean;
+  onToggleInactiveProducts?: () => void;
+  inactiveProductsCount?: number;
 }
 
 export interface TransactionMatrixTableProps {
