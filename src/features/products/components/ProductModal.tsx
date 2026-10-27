@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, RotateCw, ImagePlus, PowerOff, CheckCircle2 } from 'lucide-react';
+import { Package, RotateCw, PowerOff, CheckCircle2 } from 'lucide-react';
 
 import {
   Dialog,
@@ -40,7 +40,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [price, setPrice] = useState<string>('');
   const [stock, setStock] = useState<string>('');
   const [unit, setUnit] = useState('Pcs');
-  const [imageUrl, setImageUrl] = useState<string>('');
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
 
@@ -58,7 +57,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setPrice(editingProduct.price !== undefined ? editingProduct.price.toString() : '');
       setStock(editingProduct.stock !== undefined ? editingProduct.stock.toString() : '');
       setUnit(editingProduct.unit || 'Pcs');
-      setImageUrl(editingProduct.image || '');
     } else {
       setName('');
       setCode(`PRD-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -66,7 +64,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setPrice('');
       setStock('0');
       setUnit('Pcs');
-      setImageUrl('');
     }
   }, [editingProduct, categories, isOpen]);
 
@@ -101,7 +98,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       price: numPrice,
       stock: numStock,
       unit: unit.trim() || 'Pcs',
-      image: imageUrl.trim(),
       isActive: editingProduct ? editingProduct.isActive : true,
     });
   };
@@ -296,36 +292,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               </div>
             </div>
 
-            {/* Field: URL Foto Produk */}
-            <div>
-              <label className="block text-sm font-semibold text-on-surface mb-1.5">
-                Tautan URL Foto Produk
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="url"
-                  disabled={isSubmitting || isToggling}
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://example.com/foto-produk.jpg"
-                  className="w-full px-3.5 py-2.5 bg-surface-bg rounded-lg text-sm text-on-surface placeholder:text-text-muted ring-1 ring-border-subtle focus:ring-2 focus:ring-primary focus:bg-surface-card outline-none transition-all disabled:opacity-50"
-                />
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt="Preview"
-                    className="w-10 h-10 rounded-lg object-cover border border-border-subtle shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-text-muted shrink-0">
-                    <ImagePlus className="w-5 h-5" />
-                  </div>
-                )}
-              </div>
-            </div>
           </DialogBody>
 
           <DialogFooter className="px-6 py-4 bg-surface-container-high/30 border-t border-border-subtle flex items-center justify-between gap-2.5">

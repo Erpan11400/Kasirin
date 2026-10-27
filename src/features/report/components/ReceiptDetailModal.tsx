@@ -52,7 +52,7 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
         </DialogHeader>
 
         {/* Thermal Receipt Body */}
-        <DialogBody className="p-4 bg-amber-50/40 select-text max-h-[65vh] overflow-y-auto scrollbar-thin">
+        <DialogBody className="p-4 bg-slate-100/70 select-text max-h-[65vh] overflow-y-auto scrollbar-thin">
           <ThermalReceipt
             store={store}
             items={formattedItems}
@@ -65,7 +65,7 @@ export const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
             date={transaction.dayDate || transaction.dateTime}
             paperWidth="58mm"
             showSerratedEdges={false}
-            className="shadow-xs border-amber-200/60"
+            className="shadow-xs border-slate-200"
           />
         </DialogBody>
 

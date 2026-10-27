@@ -71,7 +71,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
         </DialogHeader>
 
         {/* Thermal Receipt Paper Container */}
-        <div className="p-4 sm:p-5 bg-amber-50/40 select-text max-h-[65vh] overflow-y-auto scrollbar-thin">
+        <div className="p-4 sm:p-5 bg-slate-100/70 select-text max-h-[65vh] overflow-y-auto scrollbar-thin">
           <ThermalReceipt
             store={store}
             items={formattedItems}
@@ -85,7 +85,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
             cashierName={user?.name || 'Kasir'}
             paperWidth="58mm"
             showSerratedEdges={false}
-            className="shadow-xs border-amber-200/60"
+            className="shadow-xs border-slate-200"
           />
         </div>
 

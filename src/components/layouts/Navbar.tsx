@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
+import { 
+  Menu, X, LogOut, ChevronDown, 
+  MonitorSmartphone, Package, FileBarChart2, 
+  Settings, Users, Clock, User 
+} from 'lucide-react';
 import Button from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { formatDateTimeShort } from '../../lib/formatters';
+import BrandLogo from '../common/BrandLogo';
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -15,33 +20,21 @@ export const Navbar: React.FC = () => {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
-  // Timer untuk tanggal dan jam berjalan realtime
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Format tanggal dan jam berjalan menggunakan formatDateTimeShort (contoh: 7 Okt 2026, 22:48)
   const currentFormattedTime = formatDateTimeShort(currentTime);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setProfileDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -57,161 +50,176 @@ export const Navbar: React.FC = () => {
 
   const allNavItems = [
     {
-      label: 'Transaksi (Kasir)',
+      label: 'Kasir',
       path: '/',
+      icon: MonitorSmartphone,
       isAllowed: () => hasPermission('transactions:view'),
     },
     {
-      label: 'Produk & Kategori',
+      label: 'Produk',
       path: '/produk',
+      icon: Package,
       isAllowed: () => hasPermission('products:view') || hasPermission('categories:view'),
     },
     {
       label: 'Laporan',
       path: '/laporan',
+      icon: FileBarChart2,
       isAllowed: () => hasPermission('transactions:view'),
     },
     {
-      label: 'Pengaturan Toko',
+      label: 'Toko',
       path: '/pengaturan-toko',
+      icon: Settings,
       isAllowed: () => hasPermission('store:view'),
     },
     {
-      label: 'User and Role',
+      label: 'Pengguna',
       path: '/pengaturan-users',
+      icon: Users,
       isAllowed: () => hasPermission('users:view') || hasPermission('roles:view'),
     },
   ];
 
-  // Menu yang tampil hanya menu yang diizinkan untuk role user saat ini
   const navItems = allNavItems.filter((item) => item.isAllowed());
 
   return (
-    <header className="fixed top-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-      <div className="h-16 w-full px-4 lg:px-6 flex items-center justify-between gap-4">
-        {/* Brand & Logo */}
-        <div className="flex items-center gap-3 shrink-0">
+    <header className="fixed top-0 w-full z-40 bg-surface-card/90 backdrop-blur-md border-b border-border-subtle shadow-xs transition-all">
+      <div className="h-16 w-full max-w-[1680px] mx-auto px-4 lg:px-6 flex items-center justify-between gap-4">
+        
+        {/* Kiri: Brand & Logo */}
+        <div className="flex items-center gap-3 w-1/4 shrink-0">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer"
+            className="lg:hidden p-2 rounded-lg text-text-muted hover:bg-surface-container-low hover:text-on-surface transition-colors cursor-pointer"
             type="button"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <img
-            alt="KasirIn Logo"
-            className="h-8 w-auto object-contain"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6ZPvKyEQT0bWe9ToxLr5VDMOGzngLtGs6qjCT-RY3_bN56d5Kag9w2Ul5JgEK1uw3OYrfj4qyUk0sXcMFnshw1Jj6co1eeALKbXRaPd3s9DLlLaVUA3jZrvHQ0fR6xk5mGY7YJoAfL5T-D5E9rIN4BbMmtNg9OkFM5qU6Xf_cP0f8TeJHoNl4rv25PKYfe31XP9OsfJvaho-3X4bcegAq-uWY2vf92CXoizp0EhYrhUqJaf8QaLq9"
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-primary tracking-tight">KasirIn</span>
-            <span className="text-[11px] leading-[14px] font-bold bg-primary-container text-on-primary-container px-2 py-0.5 rounded-full uppercase tracking-wider">
-              UMKM POS
-            </span>
+          <div 
+            className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]" 
+            onClick={() => navigate('/')}
+            title="KasirIn POS"
+          >
+            <BrandLogo variant="pill" size="md" />
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="hidden lg:flex items-center gap-1.5">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                `px-3.5 py-2 rounded-lg text-sm transition-colors ${isActive
-                  ? 'bg-primary-container text-on-primary-container font-semibold'
-                  : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+        {/* Tengah: Navigation Tabs */}
+        <nav className="hidden lg:flex items-center justify-center gap-1 w-2/4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-semibold shadow-xs'
+                      : 'text-text-muted hover:bg-surface-container-low hover:text-on-surface'
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
 
-        {/* Store & User Profile Info */}
-        <div className="flex items-center gap-3.5 shrink-0">
-          <div className="hidden md:flex flex-col items-end">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-secondary"></span>
-              <span className="text-sm font-semibold text-on-surface truncate max-w-[220px]">
-                {store.storeName || 'KasirIn Store'}
+        {/* Kanan: Store, Time & Profile */}
+        <div className="flex items-center justify-end gap-3 sm:gap-4 shrink-0">
+          <div className="hidden md:flex flex-col items-end border-r border-border-subtle pr-4">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-[11px] font-bold bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">
-                Online
+              <span className="text-sm font-semibold text-on-surface truncate max-w-[150px]">
+                {store?.storeName || 'KasirIn Store'}
               </span>
             </div>
-            <div className="text-xs text-text-muted">
+            <div className="flex items-center gap-1.5 text-xs text-text-muted mt-0.5">
+              <Clock className="w-3 h-3" />
               {currentFormattedTime}
             </div>
           </div>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={profileMenuRef}>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
               onClick={() => setProfileDropdownOpen((prev) => !prev)}
-              className="w-8 h-8 rounded-full p-0 hover:bg-transparent"
-              aria-label="User profile menu"
+              className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer group"
               aria-expanded={profileDropdownOpen}
-              aria-haspopup="true"
             >
-              <img
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover ring-2 ring-primary-fixed hover:ring-primary transition-all"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZTzgl9ibBZLoUZR2wDBhxx2klO4BwAg48p0GRoDFsI8-w_UCcIg1iALCOuMjzU2PCC2GWuj1nuou1Gjo7a8MqtXx3R1T_Eyc3wL0CTs1WlCsDmlI0qHV6yv3yY6r2vC-ho86K9Gbb7FRYOzUtsz-x5x880clD95ieSajII1dknoJenlfaj4J7vy6oytSGUqi83PzwIxyfpVzG_Jiv3nu1qENpL8bbis-mrXfgNrdfIxDp4VfKRnYm"
-              />
-            </Button>
-
-            {/* Dropdown Menu */}
-            {profileDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-surface-card border border-border-subtle shadow-xl py-2 z-50">
-                {user && (
-                  <div className="px-4 py-2 border-b border-border-subtle mb-1">
-                    <p className="text-sm font-semibold text-on-surface truncate">{user.name || 'User'}</p>
-                    <p className="text-xs text-text-muted capitalize">{user.roleName || 'Staff'}</p>
-                  </div>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleLogout}
-                  leftIcon={<LogOut className="w-4 h-4 text-status-danger" />}
-                  className="w-full justify-start text-status-danger hover:bg-error-container/20 hover:text-status-danger px-4 py-2.5 rounded-lg text-sm font-medium"
-                >
-                  Keluar (Logout)
-                </Button>
+              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                <User className="w-4 h-4" />
               </div>
-            )}
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-semibold text-on-surface leading-tight truncate max-w-[120px] sm:max-w-[150px]">
+                  {user?.name || 'User'}
+                </span>
+                <span className="text-[11px] font-medium text-text-muted capitalize leading-tight">
+                  {user?.roleName || 'Staff'}
+                </span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu dengan Animasi Sederhana */}
+            <div 
+              className={`absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-card border border-border-subtle shadow-lg p-1.5 z-50 transform origin-top-right transition-all duration-200 ${
+                profileDropdownOpen ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible'
+              }`}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleLogout}
+                leftIcon={<LogOut className="w-4 h-4" />}
+                className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
+                Keluar
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Nav Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-border-subtle bg-surface-card px-4 py-3 flex flex-col gap-1 shadow-md">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={() => setMobileMenuOpen(false)}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                `px-3 py-2 rounded-lg text-sm transition-colors ${isActive
-                  ? 'bg-primary-container text-on-primary-container font-semibold'
-                  : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+      {/* Mobile Nav Menu */}
+      <div 
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out bg-surface-card border-t border-border-subtle shadow-lg ${
+          mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="w-full max-w-[1680px] mx-auto px-4 lg:px-6 py-3 flex flex-col gap-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                end={item.path === '/'}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-text-muted hover:bg-surface-container-low hover:text-on-surface'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </div>
-      )}
+      </div>
     </header>
   );
 };

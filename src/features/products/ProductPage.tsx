@@ -327,7 +327,6 @@ export const ProductPage: React.FC = () => {
             price: formData.price,
             stock: formData.stock,
             unit: formData.unit,
-            imageUrl: formData.image,
             isActive: formData.isActive,
           },
           categories
@@ -343,7 +342,6 @@ export const ProductPage: React.FC = () => {
             price: formData.price,
             stock: formData.stock,
             unit: formData.unit,
-            imageUrl: formData.image,
           },
           categories
         );

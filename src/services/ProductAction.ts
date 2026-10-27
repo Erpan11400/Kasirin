@@ -59,8 +59,8 @@ export const mapBackendProductToProductItem = (
     stock: Number(backendProduct.stock) || 0,
     unit: backendProduct.unit || 'Pcs',
     updatedAt: updatedDateFormatted,
-    image: backendProduct.imageUrl || DEFAULT_PRODUCT_IMAGE,
-    imageAlt: backendProduct.name || 'Foto Produk',
+    image: backendProduct.imageUrl || '',
+    imageAlt: backendProduct.name || 'Produk',
     isActive: backendProduct.isActive !== false,
     createdAt: backendProduct.createdAt,
   };
@@ -96,15 +96,17 @@ export const createProduct = async (
   categories: CategoryItem[] = []
 ): Promise<ProductItem> => {
   try {
-    const body = {
+    const body: Record<string, any> = {
       name: payload.name,
       code: payload.code || `PRD-${Math.floor(1000 + Math.random() * 9000)}`,
       price: payload.price,
       stock: payload.stock,
       unit: payload.unit || 'Pcs',
       categoryId: payload.categoryId,
-      imageUrl: payload.imageUrl || '',
     };
+    if (payload.imageUrl) {
+      body.imageUrl = payload.imageUrl;
+    }
     const response = await api.post<any>('/products', body);
     const productData: BackendProductItem =
       response?.data?.product || response?.data || response;
@@ -121,7 +123,7 @@ export const createProduct = async (
       stock: body.stock,
       unit: body.unit,
       updatedAt: formatDateTimeShort(new Date()),
-      image: body.imageUrl || DEFAULT_PRODUCT_IMAGE,
+      image: body.imageUrl || '',
       imageAlt: body.name,
       isActive: true,
     };
@@ -168,7 +170,7 @@ export const updateProduct = async (
       stock: payload.stock || 0,
       unit: payload.unit || 'Pcs',
       updatedAt: formatDateTimeShort(new Date()),
-      image: payload.imageUrl || DEFAULT_PRODUCT_IMAGE,
+      image: payload.imageUrl || '',
       imageAlt: payload.name || 'Produk',
       isActive: payload.isActive !== undefined ? payload.isActive : true,
     };

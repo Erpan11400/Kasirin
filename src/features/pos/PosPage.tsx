@@ -497,16 +497,19 @@ export const PosPage: React.FC = () => {
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                   <div
                     key={n}
-                    className="bg-surface-card rounded-xl overflow-hidden shadow-sm border border-border-subtle/50 animate-pulse flex flex-col"
+                    className="bg-surface-card rounded-xl p-3.5 border border-border-subtle/50 animate-pulse flex flex-col justify-between"
                   >
-                    <div className="w-full aspect-[4/3] bg-surface-container-high"></div>
-                    <div className="p-3 flex flex-col gap-2">
-                      <div className="h-4 bg-surface-container-high rounded w-3/4"></div>
+                    <div className="flex items-center justify-between gap-1.5 mb-2">
+                      <div className="h-4 bg-surface-container-high rounded w-16"></div>
+                      <div className="h-4 bg-surface-container-high rounded w-14"></div>
+                    </div>
+                    <div className="flex flex-col gap-1.5 my-1">
+                      <div className="h-4 bg-surface-container-high rounded w-4/5"></div>
                       <div className="h-3 bg-surface-container-high rounded w-1/2"></div>
-                      <div className="flex justify-between items-center pt-2">
-                        <div className="h-5 bg-surface-container-high rounded w-20"></div>
-                        <div className="h-8 w-8 bg-surface-container-high rounded-lg"></div>
-                      </div>
+                    </div>
+                    <div className="flex justify-between items-center pt-2.5 mt-2 border-t border-border-subtle/50">
+                      <div className="h-5 bg-surface-container-high rounded w-20"></div>
+                      <div className="h-8 w-8 bg-surface-container-high rounded-lg"></div>
                     </div>
                   </div>
                 ))}

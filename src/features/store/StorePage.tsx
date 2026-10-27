@@ -66,7 +66,7 @@ export const StorePage: React.FC = () => {
       )}
 
       {/* Workspace Container */}
-      <div className="w-full mx-auto px-4 md:px-6 py-6">
+      <div className="w-full max-w-[1680px] mx-auto px-4 lg:px-6 py-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-4 sm:p-6 rounded-xl shadow-sm border border-border-subtle/70 mb-6">
           <div className="flex flex-col gap-1.5">

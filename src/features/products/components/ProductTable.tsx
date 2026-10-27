@@ -1,5 +1,5 @@
 import React from 'react';
-import { Barcode, Pencil, ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { Package, Barcode, Pencil, ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react';
 import type { ProductTableProps } from '../../../types/products';
 import { formatRupiah } from '../../../lib/formatters';
 import { Button } from '../../../components/ui/Button';
@@ -34,6 +34,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   const isAllSelected =
     products.length > 0 && products.every((p) => selectedIds.includes(p.id));
 
+  const totalColumns = (canSelect ? 1 : 0) + 5 + (hasActions ? 1 : 0);
   const startEntry = totalFilteredCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endEntry = Math.min(currentPage * itemsPerPage, totalFilteredCount);
 
@@ -53,7 +54,6 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   />
                 </th>
               )}
-              <th className="py-3 px-3 w-16">Foto</th>
               <th className="py-3 px-4 min-w-[200px]">Nama Produk &amp; Kode</th>
               <th className="py-3 px-4 min-w-[140px]">Kategori</th>
               <th className="py-3 px-4 text-right min-w-[120px]">Harga Jual</th>
@@ -65,7 +65,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <tbody className="divide-y divide-border-subtle/40 text-on-surface">
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="py-16 text-center text-text-muted">
+                <td colSpan={totalColumns} className="py-16 text-center text-text-muted">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     <span className="text-sm font-medium">Memuat katalog produk...</span>
@@ -74,7 +74,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               </tr>
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-text-muted">
+                <td colSpan={totalColumns} className="py-12 text-center text-text-muted">
                   {isInactiveTable
                     ? 'Tidak ada produk non-aktif.'
                     : 'Tidak ada produk aktif yang ditemukan.'}
@@ -109,35 +109,21 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       </td>
                     )}
 
-                    {/* Foto */}
-                    <td className="py-3.5 px-3">
-                      <div className="w-12 h-12 rounded-lg bg-surface-container-high overflow-hidden shadow-xs flex items-center justify-center relative">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className={`w-full h-full object-cover ${
-                            isInactiveTable ? 'grayscale contrast-75' : ''
-                          }`}
-                          loading="lazy"
-                        />
-                        {isOutOfStock && !isInactiveTable && (
-                          <div className="absolute inset-0 bg-on-surface/50 flex items-center justify-center">
-                            <span className="text-[9px] text-on-error bg-status-danger px-1 py-0.5 rounded font-bold uppercase tracking-wider">
-                              HABIS
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
                     {/* Nama & Kode Produk */}
                     <td className="py-3.5 px-4">
-                      <div className="text-sm font-semibold text-on-surface">
-                        {product.name}
-                      </div>
-                      <div className="text-xs text-text-muted flex items-center gap-1 mt-0.5 font-mono">
-                        <Barcode className="w-3.5 h-3.5" />
-                        <span>{product.code || '-'}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-surface-container-high/60 border border-border-subtle/50 flex items-center justify-center text-primary shrink-0">
+                          <Package className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-on-surface">
+                            {product.name}
+                          </div>
+                          <div className="text-xs text-text-muted flex items-center gap-1 mt-0.5 font-mono">
+                            <Barcode className="w-3.5 h-3.5" />
+                            <span>{product.code || '-'}</span>
+                          </div>
+                        </div>
                       </div>
                     </td>
 

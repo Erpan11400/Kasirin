@@ -63,10 +63,13 @@ export const updateStoreProfile = async (
       businessCategory: data.category,
       phone: data.phone,
       address: data.address,
-      imageUrl: data.logoUrl,
       footerNote: data.footerNote,
       showQris: data.showQris,
     };
+
+    if (data.logoUrl) {
+      payload.imageUrl = data.logoUrl;
+    }
 
     const endpoint = data.id ? `/store/${data.id}` : '/store';
     const response = await api.put<BackendStoreItem>(endpoint, payload);

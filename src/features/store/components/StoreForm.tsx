@@ -1,7 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   Store,
-  Camera,
   Building2,
   Tags,
   Phone,
@@ -23,21 +22,6 @@ export const StoreForm: React.FC<StoreFormProps> = ({
   isSaving,
   readOnly = false,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        if (evt.target?.result) {
-          onChange('logoUrl', evt.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave();
@@ -60,44 +44,6 @@ export const StoreForm: React.FC<StoreFormProps> = ({
             <span className="text-xs text-text-muted">
               Informasi legalitas dan kontak utama toko
             </span>
-          </div>
-        </div>
-
-        {/* Logo Upload Unit */}
-        <div className="bg-surface-container-low p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border-subtle/40">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-surface-container-lowest p-2 flex items-center justify-center shadow-xs border border-border-subtle/40 shrink-0">
-              <img
-                alt="Logo Toko"
-                className="w-full h-full object-contain"
-                src={data.logoUrl}
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-on-surface">
-                Logo Usaha KasirIn
-              </span>
-              <span className="text-xs text-text-muted">
-                PNG atau JPG transparan (Maks. 2MB)
-              </span>
-            </div>
-          </div>
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleLogoFileChange}
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto px-4 py-2.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Ganti Logo</span>
-            </button>
           </div>
         </div>
 

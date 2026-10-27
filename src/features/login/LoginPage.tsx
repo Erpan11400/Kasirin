@@ -1,6 +1,7 @@
 import React from 'react';
-import { Store, Shield, LockKeyhole, Zap } from 'lucide-react';
+import { Shield, LockKeyhole, Zap } from 'lucide-react';
 import { LoginForm } from './components/LoginForm';
+import BrandLogo from '../../components/common/BrandLogo';
 
 export const LoginPage: React.FC = () => {
   return (
@@ -14,18 +15,10 @@ export const LoginPage: React.FC = () => {
         
         {/* Header Section */}
         <div className="flex flex-col items-center text-center gap-2">
-          <div className="w-14 h-14 bg-[#006948] rounded-2xl shadow-lg shadow-[#006948]/30 flex items-center justify-center text-white mb-1">
-            <Store size={28} />
+          <div className="flex flex-col items-center">
+            <BrandLogo variant="pill" size="xl" layout="vertical" />
           </div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-[#131b2e]">
-              Kasir<span className="text-[#006948]">In</span>
-            </h1>
-            <span className="bg-[#006948]/10 text-[#006948] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#006948]/20">
-              POS UMKM
-            </span>
-          </div>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-xs text-[#64748B] mt-1">
             Sistem Kasir Pintar & Terintegrasi untuk UMKM
           </p>
         </div>

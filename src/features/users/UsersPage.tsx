@@ -378,8 +378,9 @@ export const UsersPage: React.FC = () => {
   const activeUsersCount = users.filter((u) => u.isActive || u.status === 'Aktif').length;
 
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-6 py-4 sm:py-6 flex flex-col gap-5 sm:gap-6 bg-surface-bg min-h-screen">
-      {/* Top Action & Info Bar */}
+    <div className="w-full flex-1">
+      <div className="w-full max-w-[1680px] mx-auto px-4 lg:px-6 py-4 sm:py-6 flex flex-col gap-5 sm:gap-6">
+        {/* Top Action & Info Bar */}
       <div className="w-full bg-surface-container-lowest rounded-xl p-4 sm:p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4 border border-border-subtle/70">
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
@@ -495,6 +496,7 @@ export const UsersPage: React.FC = () => {
 
       {/* Floating Toast Notification */}
       <Toast message={toastMessage} />
+      </div>
     </div>
   );
 };

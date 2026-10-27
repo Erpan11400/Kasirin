@@ -1,6 +1,7 @@
 import React from 'react';
 import type { StoreProfileData } from '../../types/store';
 import { formatRupiah } from '../../lib/formatters';
+import BrandLogo from '../common/BrandLogo';
 
 export interface ReceiptItem {
   id?: string;
@@ -63,7 +64,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
   return (
     <div
-      className={`relative bg-[#FFFDF9] text-[#1E293B] rounded-lg shadow-md p-6 sm:p-7 flex flex-col font-mono text-[13px] leading-relaxed transition-all border border-amber-100/50 print:border-none print:shadow-none print:p-0 ${
+      className={`relative bg-white text-[#1E293B] rounded-lg shadow-md p-6 sm:p-7 flex flex-col font-mono text-[13px] leading-relaxed transition-all border border-slate-200 print:border-none print:shadow-none print:p-0 ${
         paperWidth === '80mm' ? 'max-w-[380px]' : 'max-w-[320px]'
       } w-full mx-auto ${className}`}
     >
@@ -71,7 +72,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       {showSerratedEdges && (
         <div className="absolute -top-2.5 left-0 right-0 h-3 overflow-hidden print:hidden">
           <svg
-            className="w-full h-full text-[#FFFDF9] fill-current"
+            className="w-full h-full text-white fill-current"
             preserveAspectRatio="none"
             viewBox="0 0 200 10"
           >
@@ -82,15 +83,10 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
       {/* 1. Header Toko */}
       <div className="flex flex-col items-center text-center gap-1 pb-3">
-        {store.logoUrl && (
-          <div className="w-12 h-12 mb-1 flex items-center justify-center">
-            <img
-              alt="Logo Toko"
-              className="w-full h-full object-contain filter grayscale contrast-125"
-              src={store.logoUrl}
-            />
-          </div>
-        )}
+        {/* Brand Logo KasirIn (Pill Monokrom untuk Struk Thermal) */}
+        <div className="mb-2 flex justify-center scale-95">
+          <BrandLogo variant="receipt" size="sm" theme="monochrome" showTagline={false} />
+        </div>
         <span className="font-bold text-[15px] tracking-tight text-black uppercase">
           {store.storeName?.trim() || 'NAMA TOKO'}
         </span>
@@ -242,7 +238,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       {showSerratedEdges && (
         <div className="absolute -bottom-2.5 left-0 right-0 h-3 overflow-hidden print:hidden">
           <svg
-            className="w-full h-full text-[#FFFDF9] fill-current"
+            className="w-full h-full text-white fill-current"
             preserveAspectRatio="none"
             viewBox="0 0 200 10"
           >

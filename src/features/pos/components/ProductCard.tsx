@@ -1,9 +1,8 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Barcode } from 'lucide-react';
 import type { ProductCardProps } from '../../../types/pos';
 import { formatRupiah } from '../../../lib/formatters';
 import { Button } from '../../../components/ui/Button';
-import { DEFAULT_PRODUCT_IMAGE } from '../../../services/ProductAction';
 
 export type { ProductCardProps };
 
@@ -11,83 +10,83 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }
   const isOutOfStock = product.stock <= 0;
   const isLowStock = !isOutOfStock && (product.isLowStock || product.stock <= 5);
 
+  const handleClickCard = () => {
+    if (!isOutOfStock) {
+      onAddToCart(product);
+    }
+  };
+
   return (
     <article
-      className={`group bg-surface-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative ${
+      onClick={handleClickCard}
+      className={`group bg-surface-card rounded-xl p-3.5 shadow-xs border transition-all duration-200 flex flex-col justify-between select-none ${
         isOutOfStock
-          ? 'opacity-70 ring-1 ring-border-subtle'
+          ? 'opacity-65 border-border-subtle bg-surface-container/20 cursor-not-allowed'
           : isLowStock
-          ? 'ring-1 ring-amber-300'
-          : ''
+          ? 'border-amber-300/80 hover:border-amber-400 hover:shadow-md cursor-pointer active:scale-[0.99]'
+          : 'border-border-subtle hover:border-primary/50 hover:shadow-md cursor-pointer active:scale-[0.99]'
       }`}
     >
-      {/* Product Image & Badges */}
-      <div className="relative w-full aspect-[4/3] bg-surface-container overflow-hidden">
-        <img
-          className={`w-full h-full object-cover transition-transform duration-300 ${
-            !isOutOfStock ? 'group-hover:scale-105' : 'grayscale'
-          }`}
-          alt={product.imageAlt || product.name}
-          src={product.image || DEFAULT_PRODUCT_IMAGE}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = DEFAULT_PRODUCT_IMAGE;
-          }}
-          loading="lazy"
-        />
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          <span className="text-[11px] leading-[14px] font-bold bg-surface-card/95 text-primary px-2 py-0.5 rounded shadow-sm">
-            {product.category || 'Umum'}
-          </span>
-        </div>
+      {/* Header Badges: Category & Stock Status */}
+      <div className="flex items-start justify-between gap-1.5 mb-2">
+        <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/15 truncate max-w-[120px]">
+          {product.category || 'Umum'}
+        </span>
 
         {isOutOfStock ? (
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-            <span className="text-[11px] leading-[14px] bg-red-100 text-status-danger px-2 py-0.5 rounded shadow-sm font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-status-danger"></span>
-              Stok Habis
-            </span>
-          </div>
+          <span className="text-[10px] font-bold text-status-danger bg-status-danger/10 px-2 py-0.5 rounded-md border border-status-danger/20 shrink-0 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-status-danger"></span>
+            Habis
+          </span>
         ) : isLowStock ? (
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-            <span className="text-[11px] leading-[14px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded shadow-sm font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              Stok: {product.stock} {product.unit || ''}
-            </span>
-            <span className="text-[11px] leading-[14px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded shadow-sm">
-              Stok Menipis
-            </span>
-          </div>
+          <span className="text-[10px] font-bold text-amber-800 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/25 shrink-0 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            Sisa {product.stock} {product.unit || ''}
+          </span>
         ) : (
-          <span className="absolute top-2 right-2 text-[11px] leading-[14px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+          <span className="text-[10px] font-medium text-emerald-800 bg-emerald-500/15 px-2 py-0.5 rounded-md border border-emerald-500/25 shrink-0 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             Stok: {product.stock} {product.unit || ''}
           </span>
         )}
       </div>
 
-      {/* Info & Add Button */}
-      <div className="p-3 flex flex-col flex-1 justify-between gap-2.5">
-        <div>
-          <h3 className="text-sm font-semibold text-on-surface line-clamp-2" title={product.name}>
-            {product.name}
-          </h3>
-          <p className="text-xs text-text-muted mt-0.5">Kode: {product.code || '-'}</p>
+      {/* Info: Product Name & Code */}
+      <div className="flex-1 flex flex-col justify-start my-1">
+        <h3
+          className="text-sm font-bold text-on-surface line-clamp-2 leading-snug group-hover:text-primary transition-colors min-h-[2.5rem]"
+          title={product.name}
+        >
+          {product.name}
+        </h3>
+        <div className="text-[11px] text-text-muted flex items-center gap-1 font-mono mt-1">
+          <Barcode className="w-3.5 h-3.5 shrink-0 opacity-70" />
+          <span className="truncate">{product.code || '-'}</span>
         </div>
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-base font-bold text-primary">
+      </div>
+
+      {/* Footer: Price & Add Button */}
+      <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-border-subtle/50">
+        <div className="flex flex-col">
+          <span className="text-[10px] text-text-muted uppercase tracking-wider font-medium">Harga</span>
+          <span className="text-sm sm:text-base font-extrabold text-primary">
             {formatRupiah(product.price)}
           </span>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={isOutOfStock}
-            onClick={() => onAddToCart(product)}
-            className="h-9 w-9 p-0 rounded-lg shrink-0"
-            title={isOutOfStock ? 'Stok produk habis' : 'Tambah ke keranjang'}
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
         </div>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          disabled={isOutOfStock}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart(product);
+          }}
+          className="h-8 w-8 p-0 rounded-lg shrink-0 shadow-xs group-hover:scale-105 active:scale-95 transition-transform"
+          title={isOutOfStock ? 'Stok produk habis' : 'Tambah ke keranjang'}
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
       </div>
     </article>
   );
