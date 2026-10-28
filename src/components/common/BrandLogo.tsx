@@ -256,12 +256,16 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       ? 'text-black'
       : isDark
       ? 'text-white'
+      : theme === 'light'
+      ? 'text-slate-900'
       : 'text-on-surface';
 
     const subColor = isMono
       ? 'text-zinc-600'
       : isDark
       ? 'text-emerald-300/80'
+      : theme === 'light'
+      ? 'text-slate-500'
       : 'text-text-muted';
 
     // Variasi tipografi per konsep

@@ -202,3 +202,22 @@ export interface ExportExcelResult {
   filename: string;
 }
 
+/**
+ * Parameter payload untuk download struk transaksi thermal PDF
+ * POST /api/export/receipt/pdf
+ */
+export interface DownloadReceiptParams {
+  transactionId: string;
+  /** Ukuran kertas thermal ('58mm' atau '80mm'). Default: '80mm' */
+  paperWidth?: '58mm' | '80mm';
+  cashierName?: string;
+  customNotes?: string;
+}
+
+export type ExportReceiptPdfParams = DownloadReceiptParams;
+
+export interface ExportReceiptPdfOptions {
+  fallbackFilename?: string;
+  timeout?: number;
+}
+

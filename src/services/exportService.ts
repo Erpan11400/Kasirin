@@ -7,6 +7,9 @@ import type {
   ExportPdfOrientation,
   ExportRawDataExcelParams,
   ExportExcelResult,
+  DownloadReceiptParams,
+  ExportReceiptPdfParams,
+  ExportReceiptPdfOptions,
 } from '../types/report';
 
 export type {
@@ -16,6 +19,9 @@ export type {
   ExportPdfOrientation,
   ExportRawDataExcelParams,
   ExportExcelResult,
+  DownloadReceiptParams,
+  ExportReceiptPdfParams,
+  ExportReceiptPdfOptions,
 };
 
 /**
@@ -66,6 +72,18 @@ export const getExportPdfEndpoint = (): string => {
     return '/export/report/pdf';
   }
   return '/api/export/report/pdf';
+};
+
+/**
+ * Helper untuk menentukan path endpoint relatif yang tepat terhadap baseURL apiClient.
+ * Memastikan request selalu mengarah ke `/api/export/receipt/pdf`.
+ */
+export const getExportReceiptPdfEndpoint = (): string => {
+  const baseURL = (apiClient.defaults.baseURL || '').trim();
+  if (baseURL.endsWith('/api')) {
+    return '/export/receipt/pdf';
+  }
+  return '/api/export/receipt/pdf';
 };
 
 /**
@@ -450,13 +468,139 @@ export const downloadRawDataExcel = async (
  */
 export const exportRawDataExcel = downloadRawDataExcel;
 
+/**
+ * Mengambil file biner PDF struk transaksi dari endpoint backend `/api/export/receipt/pdf`
+ * menggunakan Axios POST dengan opsi `responseType: 'blob'`.
+ */
+export const fetchReceiptPdfBlob = async (
+  params: DownloadReceiptParams,
+  options: ExportReceiptPdfOptions = {}
+): Promise<ExportPdfResult> => {
+  const trimmedId = (params.transactionId || '').trim();
+  if (!trimmedId) {
+    throw new Error('ID Transaksi (transactionId) wajib diisi untuk mengunduh struk.');
+  }
+
+  const endpoint = getExportReceiptPdfEndpoint();
+  const timeout = options.timeout ?? 45000; // 45 detik untuk rendering Puppeteer
+
+  const payload: Record<string, unknown> = {
+    transactionId: trimmedId,
+    paperWidth: params.paperWidth || '80mm',
+  };
+
+  if (params.cashierName && params.cashierName.trim()) {
+    payload.cashierName = params.cashierName.trim();
+  }
+
+  if (params.customNotes && params.customNotes.trim()) {
+    payload.customNotes = params.customNotes.trim();
+  }
+
+  const defaultFallback =
+    options.fallbackFilename || `Struk_${trimmedId}.pdf`;
+
+  try {
+    const response = await apiClient.post(endpoint, payload, {
+      responseType: 'blob',
+      timeout,
+    });
+
+    const contentDisposition =
+      response.headers?.['content-disposition'] ||
+      response.headers?.['Content-Disposition'] ||
+      (typeof response.headers?.get === 'function'
+        ? response.headers.get('content-disposition')
+        : undefined);
+
+    const filename = extractFilenameFromContentDisposition(
+      contentDisposition,
+      defaultFallback
+    );
+
+    const blob =
+      response.data instanceof Blob
+        ? response.data
+        : new Blob([response.data], { type: 'application/pdf' });
+
+    return { blob, filename };
+  } catch (error: unknown) {
+    console.error('Error saat request export PDF struk:', error);
+    const parsedMessage = await parseBlobErrorMessage(error);
+    throw new Error(parsedMessage, { cause: error });
+  }
+};
+
+/**
+ * Service utama untuk mengunduh struk kasir PDF secara langsung (Direct Download).
+ * Memanggil backend Puppeteer, menerima biner PDF, mengekstrak filename,
+ * dan memicu download otomatis di browser tanpa membuka dialog cetak.
+ */
+export const downloadReceiptPdf = async (
+  params: DownloadReceiptParams,
+  options: ExportReceiptPdfOptions = {}
+): Promise<ExportPdfResult> => {
+  const result = await fetchReceiptPdfBlob(params, options);
+  triggerBlobDownload(result.blob, result.filename, 'application/pdf');
+  return result;
+};
+
+/**
+ * Membuka dialog print browser langsung untuk PDF struk hasil render backend Puppeteer
+ * dengan menyuntikkan dokumen PDF ke dalam iframe tersembunyi (Direct Print).
+ */
+export const printReceiptPdf = async (
+  params: DownloadReceiptParams,
+  options: ExportReceiptPdfOptions = {}
+): Promise<void> => {
+  const result = await fetchReceiptPdfBlob(params, options);
+  const pdfUrl = window.URL.createObjectURL(result.blob);
+
+  // Buat iframe tersembunyi di DOM untuk memicu dialog print otomatis
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
+  iframe.src = pdfUrl;
+
+  document.body.appendChild(iframe);
+
+  iframe.onload = () => {
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch (printErr) {
+      console.warn('Iframe print gagal, membuka window popup pencetakan:', printErr);
+      const printWin = window.open(pdfUrl, '_blank');
+      printWin?.focus();
+      printWin?.print();
+    } finally {
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+        window.URL.revokeObjectURL(pdfUrl);
+      }, 3000);
+    }
+  };
+};
+
 export const exportService = {
   fetchReportPdfBlob,
   downloadReportPdf,
   fetchRawDataExcelBlob,
   downloadRawDataExcel,
   exportRawDataExcel,
+  fetchReceiptPdfBlob,
+  downloadReceiptPdf,
+  printReceiptPdf,
   getExportPdfEndpoint,
+  getExportReceiptPdfEndpoint,
   getExportRawDataExcelEndpoint,
   getRawDataExcelFallbackFilename,
   triggerBlobDownload,

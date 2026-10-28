@@ -12,6 +12,7 @@ export interface ReceiptItem {
 }
 
 export interface ThermalReceiptProps {
+  id?: string;
   store: StoreProfileData;
   items?: ReceiptItem[];
   subtotal?: number;
@@ -29,6 +30,7 @@ export interface ThermalReceiptProps {
 }
 
 export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
+  id,
   store,
   items = [],
   subtotal,
@@ -40,7 +42,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
   invoiceNumber = '-',
   cashierName = '-',
   date,
-  paperWidth = '58mm',
+  paperWidth = '80mm',
   showSerratedEdges = true,
   className = '',
 }) => {
@@ -64,6 +66,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
   return (
     <div
+      id={id}
       className={`relative bg-white text-[#1E293B] rounded-lg shadow-md p-6 sm:p-7 flex flex-col font-mono text-[13px] leading-relaxed transition-all border border-slate-200 print:border-none print:shadow-none print:p-0 ${
         paperWidth === '80mm' ? 'max-w-[380px]' : 'max-w-[320px]'
       } w-full mx-auto ${className}`}

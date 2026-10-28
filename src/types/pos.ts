@@ -58,6 +58,7 @@ export interface ReceiptModalProps {
   cashGiven: number;
   change: number;
   paymentMethod: PaymentMethod;
-  onPrint: () => void;
+  onPrint?: () => void;
   invoiceNumber?: string;
+  transactionId?: string;
 }

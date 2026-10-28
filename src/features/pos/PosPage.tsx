@@ -333,11 +333,12 @@ export const PosPage: React.FC = () => {
   };
 
   const handlePrintReceipt = () => {
-    showToast('Mencetak struk ke printer thermal USB (80mm)...');
-    setTimeout(() => {
-      setIsReceiptOpen(false);
-      handleResetTransaction();
-    }, 1200);
+    showToast('Struk thermal sedang dicetak.');
+  };
+
+  const handleCloseReceiptModal = () => {
+    setIsReceiptOpen(false);
+    handleResetTransaction();
   };
 
   const firstAvailableProduct = useMemo(() => {
@@ -839,10 +840,10 @@ export const PosPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* MODAL: Thermal Receipt Struk Kasir (80mm preview) */}
+      {/* MODAL: Thermal Receipt Struk Kasir (Thermal Receipt Modal) */}
       <ReceiptModal
         isOpen={isReceiptOpen}
-        onClose={() => setIsReceiptOpen(false)}
+        onClose={handleCloseReceiptModal}
         cartItems={cartItems}
         subtotal={lastCreatedTransaction ? lastCreatedTransaction.totalAmount : subtotal}
         tax={tax}
@@ -851,6 +852,7 @@ export const PosPage: React.FC = () => {
         change={paymentMethod === 'tunai' ? (lastCreatedTransaction ? lastCreatedTransaction.changeAmount : change) : 0}
         paymentMethod={paymentMethod}
         invoiceNumber={lastCreatedTransaction?.invoiceNumber}
+        transactionId={lastCreatedTransaction?._id || lastCreatedTransaction?.invoiceNumber}
         onPrint={handlePrintReceipt}
       />
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import BrandLogo from '../../../components/common/BrandLogo';
 import type {
   ReportTab,
   PaymentFilter,
@@ -177,21 +178,13 @@ export const ReportPrintTemplate: React.FC<ReportPrintTemplateProps> = ({
           1. HEADER KOP LAPORAN (LETTERHEAD RESMI TOKO)
          ========================================================================= */}
       <div className="flex flex-row items-start justify-between border-b-2 border-slate-900 pb-5 gap-6">
-        {/* Identitas Toko / Usaha */}
+        {/* Identitas Brand & Toko / Usaha */}
         <div className="flex items-start gap-4 flex-1">
-          {store.logoUrl ? (
-            <img
-              src={store.logoUrl}
-              alt="Logo Toko"
-              className="w-16 h-16 object-contain rounded-md border border-slate-200 p-1 shrink-0"
-            />
-          ) : (
-            <div className="w-14 h-14 bg-slate-900 text-white font-bold rounded-lg flex items-center justify-center text-xl shrink-0 tracking-wider">
-              {store.storeName ? store.storeName.substring(0, 2).toUpperCase() : 'KI'}
-            </div>
-          )}
-          <div className="space-y-0.5">
-            <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase">
+          <div className="shrink-0 pt-0.5">
+            <BrandLogo variant="pill" size="md" theme="light" />
+          </div>
+          <div className="space-y-0.5 border-l border-slate-200 pl-4">
+            <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase">
               {store.storeName || 'KASIRIN POINT OF SALE'}
             </h1>
             {store.category && (
